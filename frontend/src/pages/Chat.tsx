@@ -6,7 +6,7 @@ import ChatWrapper from "../components/ChatWrapper";
 import React, { useState, useEffect } from "react";
 import io, { Socket } from "socket.io-client";
 
-const socketUrl = process.env.REACT_APP_BACKEND_API;
+const socketUrl = "https://better-6obcy-1.onrender.com/";
 
 const Chat: React.FC = () => {
   const [switchRoom, setSwitchRoom] = useState<boolean>(true);
