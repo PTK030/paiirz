@@ -6,7 +6,7 @@ import ChatWrapper from "../components/ChatWrapper";
 import React, { useState, useEffect } from "react";
 import io, { Socket } from "socket.io-client";
 
-const socketUrl = process.env.REACT_APP_BACKEND_API || "http://127.0.0.1:5000";
+const socketUrl = process.env.REACT_APP_BACKEND_API;
 
 const Chat: React.FC = () => {
   const [switchRoom, setSwitchRoom] = useState<boolean>(true);
