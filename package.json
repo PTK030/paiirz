@@ -1,0 +1,18 @@
+{
+  "name": "paiirz-root",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "install:all": "npm run install:frontend && npm run install:backend",
+    "install:frontend": "cd frontend && yarn install",
+    "install:backend": "cd backend && python -m venv venv && .\\venv\\Scripts\\pip install -r requirements.txt",
+    "dev:frontend": "cd frontend && yarn dev",
+    "dev:backend": "cd backend && .\\venv\\Scripts\\python main.py",
+    "dev": "npx concurrently --kill-others \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "docker:up": "docker-compose up --build",
+    "docker:down": "docker-compose down"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

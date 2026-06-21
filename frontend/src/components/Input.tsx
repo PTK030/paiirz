@@ -20,8 +20,9 @@ const Input: React.FC<InputProps> = ({ setMessage, message, sendMessage, room, i
     <input
       type="text"
       value={message}
-      disabled={room === null || isStrangerInRoom === false ? true : false}
-      className={`flex-1 outline-none px-4 bg-slate-100 py-3 sm:py-5 ${room === null || isStrangerInRoom === false ? "cursor-not-allowed" : "cursor-auto"}`}
+      placeholder="Wpisz wiadomość..."
+      disabled={room === null || isStrangerInRoom === false}
+      className={`flex-1 outline-none px-4 sm:px-6 bg-zinc-950/30 text-zinc-100 placeholder-zinc-500 py-3.5 sm:py-5 font-sans text-sm border-r border-zinc-800/80 transition-all focus:bg-zinc-950/60 ${room === null || isStrangerInRoom === false ? "cursor-not-allowed opacity-50" : "cursor-auto"}`}
       onChange={e => setMessage(e.target.value)}
       onKeyPress={handleKeyPress}
     />

@@ -9,6 +9,25 @@ export default {
       colors: {
         "deep-navy-blue": '#021526',
         "mid-night-blue": '#03346E'
+      },
+      fontFamily: {
+        sans: [
+          "'Satoshi'",
+          "-apple-system",
+          "BlinkMacSystemFont",
+          "'SF Pro Display'",
+          "'SF Pro Text'",
+          "'Inter'",
+          "system-ui",
+          "sans-serif"
+        ],
+        mono: [
+          "'JetBrains Mono'",
+          "'SF Mono'",
+          "SFMono-Regular",
+          "ui-monospace",
+          "monospace"
+        ]
       }
     },
   },
