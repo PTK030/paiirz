@@ -46,6 +46,7 @@ interface ChatWrapperProps {
     action: string | number, 
     actionType?: "vote" | "complete_turn" | "skip_question" | "next_round" | "accept" | "decline" | "quit"
   ) => void;
+  hasExtraBottomPanel?: boolean;
 }
 
 const popularEmojis = [
@@ -57,11 +58,12 @@ const popularEmojis = [
 
 interface VanishingBubbleProps {
   msgId: string;
+  isMe: boolean;
   onVanish: (id: string) => void;
   children: React.ReactNode;
 }
 
-const VanishingBubble: React.FC<VanishingBubbleProps> = ({ msgId, onVanish, children }) => {
+const VanishingBubble: React.FC<VanishingBubbleProps> = ({ msgId, isMe, onVanish, children }) => {
   const [timeLeft, setTimeLeft] = useState(5);
 
   useEffect(() => {
@@ -80,11 +82,16 @@ const VanishingBubble: React.FC<VanishingBubbleProps> = ({ msgId, onVanish, chil
   }, [msgId, onVanish]);
 
   return (
-    <div className="relative flex items-center gap-2 max-w-full">
+    <div className={`relative flex flex-col group w-fit ${isMe ? "items-end" : "items-start"}`}>
       {children}
-      <span className="text-[10px] text-purple-400 font-mono select-none animate-pulse shrink-0 bg-purple-950/40 px-1.5 py-0.5 rounded border border-purple-800/20">
-        {timeLeft}s
-      </span>
+      <div className={`flex items-center gap-1.5 mt-1 mx-1 opacity-60 group-hover:opacity-100 transition-opacity duration-300 ${isMe ? "flex-row-reverse" : ""}`}>
+        <svg className="w-3 h-3 text-violet-400 animate-pulse-soft" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <span className="text-[10px] font-bold text-violet-400 tracking-wider uppercase">
+          Znika za {timeLeft}s
+        </span>
+      </div>
     </div>
   );
 };
@@ -92,7 +99,7 @@ const VanishingBubble: React.FC<VanishingBubbleProps> = ({ msgId, onVanish, chil
 const ChatWrapper: React.FC<ChatWrapperProps> = ({
   chat,
   socket,
-  status,
+  status: _status,
   isStrangerTyping,
   onSendReaction,
   onVanishMessage,
@@ -101,6 +108,7 @@ const ChatWrapper: React.FC<ChatWrapperProps> = ({
   onUnsendMessage,
   onRemoveMessageForMe,
   onIcebreakerAction,
+  hasExtraBottomPanel,
 }) => {
   const messageEndRef = useRef<HTMLDivElement>(null);
   const [activeMessageId, setActiveMessageId] = useState<string | null>(null);
@@ -173,12 +181,10 @@ const ChatWrapper: React.FC<ChatWrapperProps> = ({
   }, [activeViewOnceId, lightboxImage, lightboxVideo, onScreenshotDetected]);
 
   return (
-    <div className="flex flex-col h-full max-h-full overflow-y-auto relative scroll-container">
-      <div className="sticky top-0 bg-black/40 backdrop-blur-md border-b border-zinc-850 py-2.5 text-center text-[10px] font-sans font-extrabold uppercase tracking-widest text-zinc-450 z-30 select-none">
-        {status}
-      </div>
+    <div className={`flex-grow flex flex-col w-full h-full relative z-10 pt-[72px] overflow-y-auto overflow-x-hidden scroll-smooth ${hasExtraBottomPanel ? "pb-[260px]" : "pb-24"}`}>
 
-      <div className="flex flex-col p-4 space-y-4 flex-grow">
+
+      <div className="flex-grow flex flex-col justify-end w-full max-w-4xl mx-auto px-4 sm:px-6 md:px-8 pb-4">
         <AnimatePresence initial={false}>
           {socket &&
             chat.map((msg) => (
@@ -188,13 +194,7 @@ const ChatWrapper: React.FC<ChatWrapperProps> = ({
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.9 }}
                 transition={{ duration: 0.2 }}
-                className={`flex flex-col ${
-                  msg.sid === "system"
-                    ? "items-center w-full"
-                    : msg.sid === socket.id
-                      ? "items-end"
-                      : "items-start"
-                }`}
+                className={`flex flex-col w-full mb-6 ${msg.sid === socket?.id ? "items-end" : msg.sid === "system" ? "items-center" : "items-start"}`}
               >
                 {msg.sid === "system" ? (
                   msg.icebreaker ? (
@@ -205,29 +205,19 @@ const ChatWrapper: React.FC<ChatWrapperProps> = ({
                       onAction={(messageId, action, actionType) => onIcebreakerAction?.(messageId, action, actionType)}
                     />
                   ) : (
-                    <div className={`rounded-xl px-4 py-2.5 text-xs font-sans font-semibold my-1.5 select-none max-w-[85%] text-center shadow-sm border ${
-                      msg.message?.includes("zrzut") || msg.message?.includes("zrzutu")
-                        ? "bg-amber-950/20 border-amber-900/30 text-amber-300"
-                        : msg.message?.includes("znikających")
-                        ? "bg-purple-950/20 border-purple-900/30 text-purple-300"
-                        : msg.message?.includes("antyspam") || msg.message?.includes("Ograniczenie")
-                        ? "bg-red-950/20 border-red-900/30 text-red-300"
-                        : "bg-zinc-900/40 border-zinc-850/60 text-zinc-400"
-                    }`}>
+                    <div className="px-5 py-2.5 bg-zinc-900/60 border border-zinc-800/60 rounded-xl backdrop-blur-md text-xs text-zinc-400 max-w-sm text-center shadow-lg">
                       {msg.message}
                     </div>
                   )
                 ) : (
                   <>
-                    <div className="text-zinc-500 text-[9px] font-sans font-bold uppercase tracking-wider mb-1 px-1 select-none">
-                      {msg.sid === socket.id ? "Ty" : "Obcy"}
+                    <div className={`text-[10px] font-bold uppercase tracking-widest mb-1.5 opacity-60 ${msg.sid === socket?.id ? "text-indigo-400 mr-1" : "text-zinc-400 ml-1"}`}>
+                      {msg.sid === socket?.id ? "Ty" : "Obcy"}
                     </div>
                     
                     {/* Wrapping container holds trigger and message bubble */}
                     <div
-                      className={`relative flex items-center gap-2 max-w-[85%] message-container ${
-                        msg.sid === socket.id ? "flex-row-reverse" : "flex-row"
-                      }`}
+                      className={`relative flex items-center gap-2 group ${msg.sid === socket?.id ? "flex-row-reverse" : "flex-row"}`}
                     >
                       {/* Floating Emoji Picker */}
                       <AnimatePresence>
@@ -238,26 +228,22 @@ const ChatWrapper: React.FC<ChatWrapperProps> = ({
                               animate={{ opacity: 1, y: 0 }}
                               exit={{ opacity: 0, y: 10 }}
                               transition={{ duration: 0.12 }}
-                              className={`absolute z-20 bottom-full mb-2 bg-zinc-900 border border-zinc-800 rounded-xl p-2.5 shadow-xl w-48 grid grid-cols-6 gap-2 reaction-picker after:absolute after:-bottom-2 after:left-0 after:right-0 after:h-2 after:content-[''] ${
-                                msg.sid === socket.id ? "right-0" : "left-0"
-                              }`}
+                              className={`absolute bottom-full mb-2 flex flex-wrap gap-1 p-2 bg-zinc-900/90 border border-zinc-800/80 rounded-2xl backdrop-blur-xl shadow-2xl z-30 w-[240px] ${msg.sid === socket?.id ? "right-0" : "left-0"}`}
                             >
                               {popularEmojis.map((emoji) => {
                                 const mySid = socket.id || "";
                                 const hasReacted = msg.reactions[mySid] === emoji;
                                 return (
-                                  <button
-                                    key={emoji}
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      onSendReaction(msg.id, hasReacted ? null : emoji);
-                                      setExpandedMessageId(null);
-                                      setActiveMessageId(null);
-                                    }}
-                                    className={`hover:scale-135 active:scale-95 transition-transform text-sm cursor-pointer p-0.5 text-center ${
-                                      hasReacted ? "filter drop-shadow-[0_0_4px_rgba(255,255,255,0.7)] scale-110" : ""
-                                    }`}
-                                  >
+                                    <button
+                                      key={emoji}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        onSendReaction(msg.id, hasReacted ? null : emoji);
+                                        setExpandedMessageId(null);
+                                        setActiveMessageId(null);
+                                      }}
+                                      className={`p-1.5 text-lg hover:scale-125 transition-transform duration-200 outline-none cursor-pointer ${hasReacted ? "bg-indigo-500/20 rounded-lg" : ""}`}
+                                    >
                                     {emoji}
                                   </button>
                                 );
@@ -269,26 +255,22 @@ const ChatWrapper: React.FC<ChatWrapperProps> = ({
                               animate={{ opacity: 1, y: 0 }}
                               exit={{ opacity: 0, y: 10 }}
                               transition={{ duration: 0.12 }}
-                              className={`absolute z-20 bottom-full mb-2 flex gap-2 bg-zinc-900 border border-zinc-800 rounded-full px-2.5 py-1 shadow-xl reaction-picker after:absolute after:-bottom-2 after:left-0 after:right-0 after:h-2 after:content-[''] ${
-                                msg.sid === socket.id ? "right-0" : "left-0"
-                              }`}
+                              className={`absolute bottom-full mb-2 flex items-center gap-1 p-1.5 bg-zinc-900/90 border border-zinc-800/80 rounded-2xl backdrop-blur-xl shadow-2xl z-30 ${msg.sid === socket?.id ? "right-0" : "left-0"}`}
                             >
                               {["👍", "❤️", "😂", "😮", "😢", "🙏"].map((emoji) => {
                                 const mySid = socket.id || "";
                                 const hasReacted = msg.reactions[mySid] === emoji;
                                 return (
-                                  <button
-                                    key={emoji}
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      onSendReaction(msg.id, hasReacted ? null : emoji);
-                                      setActiveMessageId(null);
-                                    }}
-                                    className={`hover:scale-130 active:scale-95 transition-transform text-sm px-0.5 cursor-pointer ${
-                                      hasReacted ? "filter drop-shadow-[0_0_4px_rgba(255,255,255,0.7)]" : ""
-                                    }`}
-                                    title={emoji}
-                                  >
+                                    <button
+                                      key={emoji}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        onSendReaction(msg.id, hasReacted ? null : emoji);
+                                        setActiveMessageId(null);
+                                      }}
+                                      className={`p-1.5 text-lg hover:scale-125 transition-transform duration-200 outline-none cursor-pointer ${hasReacted ? "bg-indigo-500/20 rounded-lg" : ""}`}
+                                      title={emoji}
+                                    >
                                     {emoji}
                                   </button>
                                 );
@@ -298,7 +280,7 @@ const ChatWrapper: React.FC<ChatWrapperProps> = ({
                                   e.stopPropagation();
                                   setExpandedMessageId(msg.id);
                                 }}
-                                className="hover:scale-130 active:scale-95 transition-transform text-sm px-1 cursor-pointer text-zinc-400 font-bold"
+                                className="w-8 h-8 flex items-center justify-center rounded-xl bg-zinc-800/50 hover:bg-zinc-700/50 text-zinc-300 transition-colors outline-none ml-1 cursor-pointer"
                                 title="Więcej"
                               >
                                 +
@@ -311,19 +293,15 @@ const ChatWrapper: React.FC<ChatWrapperProps> = ({
                       {/* Message Bubble rendering */}
                       {msg.isUnsent ? (
                         <div
-                          className={`rounded-2xl shadow-sm border border-zinc-800/65 bg-transparent text-zinc-550 italic px-4 py-2.5 text-xs sm:text-sm select-none break-words ${
-                            msg.sid === socket.id
-                              ? "rounded-tr-none"
-                              : "rounded-tl-none"
-                          }`}
+                          className="px-5 py-3.5 bg-zinc-900/40 border border-zinc-800/40 rounded-2xl text-zinc-500 text-sm sm:text-base italic"
                         >
-                          {msg.sid === socket.id ? "Cofnąłeś wysłanie wiadomości" : "Obcy cofnął wysłanie wiadomości"}
+                          {msg.sid === socket?.id ? "Cofnąłeś wysłanie wiadomości" : "Obcy cofnął wysłanie wiadomości"}
                         </div>
                       ) : msg.vanishing ? (
-                        <VanishingBubble msgId={msg.id} onVanish={onVanishMessage || (() => {})}>
+                        <VanishingBubble isMe={msg.sid === socket?.id} msgId={msg.id} onVanish={onVanishMessage || (() => {})}>
                           <div
                             onClick={() => {
-                              if ((msg.image || msg.video) && msg.viewOnce && msg.sid !== socket.id) {
+                              if ((msg.image || msg.video) && msg.viewOnce && msg.sid !== socket?.id) {
                                 setLightboxImage(msg.image || null);
                                 setLightboxVideo(msg.video || null);
                                 setActiveViewOnceId(msg.id);
@@ -331,27 +309,23 @@ const ChatWrapper: React.FC<ChatWrapperProps> = ({
                                 setActiveMessageId(activeMessageId === msg.id ? null : msg.id);
                               }
                             }}
-                            className={`rounded-2xl shadow-md cursor-pointer overflow-hidden max-w-full select-none text-xs sm:text-sm break-words ${
-                              msg.sid === socket.id
-                                ? "bg-gradient-to-r from-purple-600 to-fuchsia-600 text-white rounded-tr-none border border-purple-500/35 font-sans"
-                                : "bg-purple-950/20 text-zinc-200 border border-purple-900/40 rounded-tl-none font-sans"
-                            } ${(msg.image || msg.video) && !(msg.viewOnce && msg.sid !== socket.id) ? "p-1.5" : msg.audio ? "p-1" : "px-4 py-2.5"}`}
+                            className={`relative overflow-hidden cursor-pointer transition-all duration-300 max-w-[85vw] sm:max-w-[70vw] md:max-w-md ${msg.sid === socket?.id ? "bg-indigo-500/10 border border-indigo-500/20 text-indigo-50 rounded-[1.5rem] rounded-tr-sm" : "bg-zinc-900/80 border border-zinc-800/80 text-zinc-200 rounded-[1.5rem] rounded-tl-sm shadow-xl"} shadow-[0_0_15px_rgba(139,92,246,0.15)] ring-1 ring-violet-500/30 hover:scale-[1.01]`}
                           >
                             {msg.audio ? (
-                              <VoicePlayer audioUrl={msg.audio} isMyMessage={msg.sid === socket.id} />
+                              <VoicePlayer audioUrl={msg.audio} isMyMessage={msg.sid === socket?.id} />
                             ) : (
-                              <>
+                              <div className="flex flex-col gap-1 p-1">
                                 {msg.image && (
-                                  (msg.viewOnce && msg.sid !== socket.id) ? (
-                                    <div className="flex items-center justify-center gap-2 px-3 py-2.5 text-xs font-bold text-zinc-400 bg-zinc-950/60 border border-zinc-800 rounded-xl font-sans tracking-wider uppercase select-none">
-                                      <span>Wyświetl raz</span>
+                                  (msg.viewOnce && msg.sid !== socket?.id) ? (
+                                    <div className="px-6 py-8 flex flex-col items-center justify-center gap-3 bg-zinc-950/80 rounded-2xl border border-zinc-800/50">
+                                      <span className="text-xs font-bold uppercase tracking-wider text-zinc-400">Wyświetl raz</span>
                                     </div>
                                   ) : (
-                                    <div className="relative overflow-hidden rounded-xl bg-black/10 max-w-full">
+                                    <div className="relative w-full max-w-[240px] sm:max-w-xs overflow-hidden rounded-[1.2rem]">
                                       <img
                                         src={msg.image}
                                         alt="Wysłane zdjęcie"
-                                        className="max-w-full max-h-72 object-contain hover:scale-[1.02] transition-transform duration-200"
+                                        className="w-full h-auto object-cover cursor-zoom-in hover:opacity-90 transition-opacity"
                                         onClick={(e) => {
                                           e.stopPropagation();
                                           setLightboxImage(msg.image || null);
@@ -361,12 +335,12 @@ const ChatWrapper: React.FC<ChatWrapperProps> = ({
                                   )
                                 )}
                                 {msg.video && (
-                                  (msg.viewOnce && msg.sid !== socket.id) ? (
-                                    <div className="flex items-center justify-center gap-2 px-3 py-2.5 text-xs font-bold text-zinc-400 bg-zinc-950/60 border border-zinc-800 rounded-xl font-sans tracking-wider uppercase select-none">
-                                      <span>Wyświetl raz (Wideo)</span>
+                                  (msg.viewOnce && msg.sid !== socket?.id) ? (
+                                    <div className="px-6 py-8 flex flex-col items-center justify-center gap-3 bg-zinc-950/80 rounded-2xl border border-zinc-800/50">
+                                      <span className="text-xs font-bold uppercase tracking-wider text-zinc-400">Wyświetl raz (Wideo)</span>
                                     </div>
                                   ) : (
-                                    <div className="relative overflow-hidden rounded-xl bg-black/10 max-w-full">
+                                    <div className="relative w-full max-w-[240px] sm:max-w-xs overflow-hidden rounded-[1.2rem]">
                                       <CustomVideoPlayer
                                         src={msg.video}
                                         mode="inline"
@@ -378,18 +352,18 @@ const ChatWrapper: React.FC<ChatWrapperProps> = ({
                                   )
                                 )}
                                 {msg.message && (
-                                  <div className={(msg.image || msg.video) && !(msg.viewOnce && msg.sid !== socket.id) ? "px-3 py-2 text-left" : ""}>
+                                  <div className={`px-4 py-3 text-sm sm:text-base leading-relaxed whitespace-pre-wrap break-words ${msg.sid === socket?.id ? "text-indigo-50" : "text-zinc-200"}`}>
                                     {msg.message}
                                   </div>
                                 )}
-                              </>
+                              </div>
                             )}
                           </div>
                         </VanishingBubble>
                       ) : (
                         <div
                           onClick={() => {
-                            if ((msg.image || msg.video) && msg.viewOnce && msg.sid !== socket.id) {
+                            if ((msg.image || msg.video) && msg.viewOnce && msg.sid !== socket?.id) {
                               setLightboxImage(msg.image || null);
                               setLightboxVideo(msg.video || null);
                               setActiveViewOnceId(msg.id);
@@ -397,27 +371,23 @@ const ChatWrapper: React.FC<ChatWrapperProps> = ({
                               setActiveMessageId(activeMessageId === msg.id ? null : msg.id);
                             }
                           }}
-                          className={`rounded-2xl shadow-md cursor-pointer overflow-hidden max-w-full select-none text-xs sm:text-sm break-words ${
-                            msg.sid === socket.id
-                              ? "bg-gradient-to-r from-indigo-600 to-violet-600 text-white rounded-tr-none border border-indigo-500/20 font-sans"
-                              : "bg-zinc-900/60 text-zinc-155 border border-zinc-850/80 rounded-tl-none font-sans"
-                          } ${(msg.image || msg.video) && !(msg.viewOnce && msg.sid !== socket.id) ? "p-1.5" : msg.audio ? "p-1" : "px-4 py-2.5"}`}
+                          className={`relative overflow-hidden cursor-pointer transition-all duration-300 max-w-[85vw] sm:max-w-[70vw] md:max-w-md ${msg.sid === socket?.id ? "bg-indigo-500/10 border border-indigo-500/20 text-indigo-50 rounded-[1.5rem] rounded-tr-sm" : "bg-zinc-900/80 border border-zinc-800/80 text-zinc-200 rounded-[1.5rem] rounded-tl-sm shadow-xl"} hover:scale-[1.01]`}
                         >
                           {msg.audio ? (
-                            <VoicePlayer audioUrl={msg.audio} isMyMessage={msg.sid === socket.id} />
+                            <VoicePlayer audioUrl={msg.audio} isMyMessage={msg.sid === socket?.id} />
                           ) : (
-                            <>
+                            <div className="flex flex-col gap-1 p-1">
                               {msg.image && (
-                                (msg.viewOnce && msg.sid !== socket.id) ? (
-                                  <div className="flex items-center justify-center gap-2 px-3 py-2.5 text-xs font-bold text-zinc-400 bg-zinc-950/60 border border-zinc-800 rounded-xl font-sans tracking-wider uppercase select-none">
-                                    <span>Wyświetl raz</span>
+                                (msg.viewOnce && msg.sid !== socket?.id) ? (
+                                  <div className="px-6 py-8 flex flex-col items-center justify-center gap-3 bg-zinc-950/80 rounded-2xl border border-zinc-800/50">
+                                    <span className="text-xs font-bold uppercase tracking-wider text-zinc-400">Wyświetl raz</span>
                                   </div>
                                 ) : (
-                                  <div className="relative overflow-hidden rounded-xl bg-black/10 max-w-full">
+                                  <div className="relative w-full max-w-[240px] sm:max-w-xs overflow-hidden rounded-[1.2rem]">
                                     <img
                                       src={msg.image}
                                       alt="Wysłane zdjęcie"
-                                      className="max-w-full max-h-72 object-contain hover:scale-[1.02] transition-transform duration-200"
+                                      className="w-full h-auto object-cover cursor-zoom-in hover:opacity-90 transition-opacity"
                                       onClick={(e) => {
                                         e.stopPropagation();
                                         setLightboxImage(msg.image || null);
@@ -427,12 +397,12 @@ const ChatWrapper: React.FC<ChatWrapperProps> = ({
                                 )
                               )}
                               {msg.video && (
-                                (msg.viewOnce && msg.sid !== socket.id) ? (
-                                  <div className="flex items-center justify-center gap-2 px-3 py-2.5 text-xs font-bold text-zinc-400 bg-zinc-950/60 border border-zinc-800 rounded-xl font-sans tracking-wider uppercase select-none">
-                                    <span>Wyświetl raz (Wideo)</span>
+                                (msg.viewOnce && msg.sid !== socket?.id) ? (
+                                  <div className="px-6 py-8 flex flex-col items-center justify-center gap-3 bg-zinc-950/80 rounded-2xl border border-zinc-800/50">
+                                    <span className="text-xs font-bold uppercase tracking-wider text-zinc-400">Wyświetl raz (Wideo)</span>
                                   </div>
                                 ) : (
-                                  <div className="relative overflow-hidden rounded-xl bg-black/10 max-w-full">
+                                  <div className="relative w-full max-w-[240px] sm:max-w-xs overflow-hidden rounded-[1.2rem]">
                                     <CustomVideoPlayer
                                       src={msg.video}
                                       mode="inline"
@@ -444,26 +414,22 @@ const ChatWrapper: React.FC<ChatWrapperProps> = ({
                                 )
                               )}
                               {msg.message && (
-                                <div className={(msg.image || msg.video) && !(msg.viewOnce && msg.sid !== socket.id) ? "px-3 py-2 text-left" : ""}>
+                                <div className={`px-4 py-3 text-sm sm:text-base leading-relaxed whitespace-pre-wrap break-words ${msg.sid === socket?.id ? "text-indigo-50" : "text-zinc-200"}`}>
                                   {msg.message}
                                 </div>
                               )}
-                            </>
+                            </div>
                           )}
                         </div>
                       )}
 
                       {/* Action buttons (Reactions & Trash) */}
                       {!msg.isUnsent && (
-                        <div className={`flex items-center gap-1 shrink-0 ${
-                          msg.sid === socket.id ? "flex-row-reverse" : "flex-row"
-                        }`}>
+                        <div className={`absolute top-1/2 -translate-y-1/2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 ${msg.sid === socket?.id ? "right-full mr-2" : "left-full ml-2"}`}>
                           {Object.keys(msg.reactions).length === 0 && (
                             <button
                               onClick={() => setActiveMessageId(activeMessageId === msg.id ? null : msg.id)}
-                              className={`transition-all duration-200 text-zinc-400 hover:text-zinc-200 hover:scale-110 hover:opacity-100 text-base p-1 cursor-pointer select-none ${
-                                activeMessageId === msg.id ? "opacity-100" : "opacity-40"
-                              }`}
+                              className="p-1.5 sm:p-2 text-zinc-400 hover:text-zinc-200 bg-zinc-900/80 hover:bg-zinc-800/80 border border-zinc-800/80 rounded-full backdrop-blur-sm transition-all duration-200 outline-none hover:scale-110 shadow-lg cursor-pointer"
                               title="Dodaj reakcję"
                             >
                               <BsEmojiSmile />
@@ -471,7 +437,7 @@ const ChatWrapper: React.FC<ChatWrapperProps> = ({
                           )}
                           <button
                             onClick={() => setDeleteConfirmId(msg.id)}
-                            className="transition-all duration-200 text-zinc-400 hover:text-red-400 hover:scale-110 opacity-40 hover:opacity-100 text-base p-1 cursor-pointer select-none"
+                            className="p-1.5 sm:p-2 text-zinc-400 hover:text-red-400 bg-zinc-900/80 hover:bg-zinc-800/80 border border-zinc-800/80 rounded-full backdrop-blur-sm transition-all duration-200 outline-none hover:scale-110 shadow-lg cursor-pointer"
                             title="Usuń wiadomość"
                           >
                             <BsTrash />
@@ -483,21 +449,15 @@ const ChatWrapper: React.FC<ChatWrapperProps> = ({
                     {/* Reaction Badges */}
                     {Object.keys(msg.reactions).length > 0 && (
                       <div
-                        className={`flex gap-1 mt-1 flex-wrap ${
-                          msg.sid === socket.id ? "justify-end animate-fade-in" : "justify-start animate-fade-in"
-                        }`}
+                        className={`flex flex-wrap gap-1 mt-1 z-10 relative ${msg.sid === socket?.id ? "justify-end mr-2" : "justify-start ml-2"}`}
                       >
                         {Object.entries(msg.reactions).map(([reactionSid, emoji]) => (
                           <motion.span
                             key={reactionSid}
                             initial={{ scale: 0.8, opacity: 0 }}
                             animate={{ scale: 1, opacity: 1 }}
-                            className={`text-[10px] px-1.5 py-0.5 rounded-full border flex items-center gap-0.5 select-none ${
-                              reactionSid === socket.id
-                                ? "bg-zinc-800 border-zinc-700 text-zinc-100 font-sans font-semibold"
-                                : "bg-white/5 border-white/10 text-zinc-200 font-sans font-semibold"
-                            }`}
-                            title={reactionSid === socket.id ? "Ty" : "Obcy"}
+                            className="inline-flex items-center justify-center min-w-[24px] h-6 px-1.5 bg-zinc-900/90 border border-zinc-800/80 text-sm rounded-full shadow-md backdrop-blur-sm select-none"
+                            title={reactionSid === socket?.id ? "Ty" : "Obcy"}
                           >
                             {emoji}
                           </motion.span>
@@ -518,22 +478,13 @@ const ChatWrapper: React.FC<ChatWrapperProps> = ({
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.8, y: 10 }}
               transition={{ duration: 0.2 }}
-              className="flex items-center gap-2 justify-start mt-2"
+              className="flex flex-col items-start w-full mb-6"
             >
-              <p className="text-zinc-500 text-[9px] font-sans font-bold uppercase tracking-wider select-none">Obcy</p>
-              <div className="bg-white/5 border border-white/10 backdrop-blur-sm px-4 py-3 rounded-2xl flex gap-1.5 items-center max-w-xs shadow-md rounded-tl-none">
-                <span
-                  className="w-1.5 h-1.5 bg-violet-400 rounded-full animate-bounce"
-                  style={{ animationDelay: "0ms" }}
-                ></span>
-                <span
-                  className="w-1.5 h-1.5 bg-violet-400 rounded-full animate-bounce"
-                  style={{ animationDelay: "150ms" }}
-                ></span>
-                <span
-                  className="w-1.5 h-1.5 bg-violet-400 rounded-full animate-bounce"
-                  style={{ animationDelay: "300ms" }}
-                ></span>
+              <p className="text-[10px] font-bold uppercase tracking-widest mb-1.5 opacity-60 text-zinc-400 ml-1">Obcy</p>
+              <div className="flex items-center gap-1.5 px-4 py-3.5 bg-zinc-900/80 border border-zinc-800/80 rounded-[1.5rem] rounded-tl-sm shadow-xl w-fit">
+                <span className="w-1.5 h-1.5 rounded-full bg-zinc-500 animate-bounce" style={{ animationDelay: "0ms" }}></span>
+                <span className="w-1.5 h-1.5 rounded-full bg-zinc-500 animate-bounce" style={{ animationDelay: "150ms" }}></span>
+                <span className="w-1.5 h-1.5 rounded-full bg-zinc-500 animate-bounce" style={{ animationDelay: "300ms" }}></span>
               </div>
             </motion.div>
           )}
@@ -550,14 +501,14 @@ const ChatWrapper: React.FC<ChatWrapperProps> = ({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={closeLightbox}
-            className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 cursor-zoom-out"
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-zinc-950/95 backdrop-blur-2xl p-4"
           >
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
               transition={{ duration: 0.15, ease: "easeOut" }}
-              className="relative max-w-full max-h-full flex flex-col items-center justify-center"
+              className="relative max-w-full max-h-full"
               onClick={(e) => e.stopPropagation()}
             >
               {lightboxImage ? (
@@ -565,13 +516,13 @@ const ChatWrapper: React.FC<ChatWrapperProps> = ({
                   <img
                     src={lightboxImage}
                     alt="Powiększone zdjęcie"
-                    className="max-w-[95vw] max-h-[80vh] object-contain rounded-lg shadow-2xl border border-zinc-700/50 select-none"
+                    className="max-w-full max-h-[90vh] object-contain rounded-2xl shadow-2xl border border-zinc-800/50 select-none pointer-events-auto"
                     onContextMenu={(e) => e.preventDefault()}
                     onDragStart={(e) => e.preventDefault()}
                   />
                   <button
                     onClick={closeLightbox}
-                    className="mt-4 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 font-sans text-xs px-5 py-2.5 rounded-lg border border-zinc-800 transition-colors uppercase tracking-wider cursor-pointer select-none outline-none"
+                    className="absolute -top-4 -right-4 sm:-top-6 sm:-right-6 w-10 h-10 flex items-center justify-center bg-zinc-900/80 border border-zinc-800/80 text-zinc-400 hover:text-white rounded-full backdrop-blur-xl shadow-xl transition-colors outline-none cursor-pointer"
                   >
                     Zamknij
                   </button>
@@ -589,7 +540,7 @@ const ChatWrapper: React.FC<ChatWrapperProps> = ({
                   />
                   <button
                     onClick={closeLightbox}
-                    className="mt-4 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 font-sans text-xs px-5 py-2.5 rounded-lg border border-zinc-800 transition-colors uppercase tracking-wider cursor-pointer select-none outline-none"
+                    className="absolute -top-4 -right-4 sm:-top-6 sm:-right-6 w-10 h-10 flex items-center justify-center bg-zinc-900/80 border border-zinc-800/80 text-zinc-400 hover:text-white rounded-full backdrop-blur-xl shadow-xl transition-colors outline-none cursor-pointer"
                   >
                     Zamknij
                   </button>
@@ -611,7 +562,7 @@ const ChatWrapper: React.FC<ChatWrapperProps> = ({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
+              className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950/80 backdrop-blur-sm p-4"
               onClick={() => setDeleteConfirmId(null)}
             >
               <motion.div
@@ -619,21 +570,21 @@ const ChatWrapper: React.FC<ChatWrapperProps> = ({
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 8 }}
                 transition={{ duration: 0.15, ease: "easeOut" }}
-                className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 max-w-sm w-full flex flex-col gap-4 text-zinc-200 font-sans"
+                className="w-full max-w-sm bg-zinc-950/90 border border-zinc-800/80 rounded-[2rem] shadow-2xl overflow-hidden backdrop-blur-xl flex flex-col items-center"
                 onClick={(e) => e.stopPropagation()}
               >
-                <div className="text-center select-none font-sans">
-                  <h3 className="text-sm font-bold uppercase tracking-wider text-zinc-100">Usuń wiadomość?</h3>
-                  <p className="text-[10px] text-zinc-500 uppercase tracking-widest mt-1">Wybierz sposób usunięcia wiadomości.</p>
+                <div className="p-6 text-center">
+                  <h3 className="text-xl font-bold text-white mb-2">Usuń wiadomość?</h3>
+                  <p className="text-sm text-zinc-400">Wybierz sposób usunięcia wiadomości.</p>
                 </div>
-                <div className="flex flex-col gap-2 mt-2">
+                <div className="w-full flex flex-col gap-0 border-t border-zinc-800/50">
                   {isOwnMessage && onUnsendMessage && (
                     <button
                       onClick={() => {
                         onUnsendMessage(deleteConfirmId);
                         setDeleteConfirmId(null);
                       }}
-                      className="w-full bg-red-950/40 hover:bg-red-900/60 text-red-400 border border-red-900/40 font-semibold py-2.5 rounded-lg transition-colors cursor-pointer text-xs uppercase tracking-wider outline-none"
+                      className="w-full py-4 text-sm font-semibold text-red-400 hover:bg-zinc-900/80 transition-colors border-b border-zinc-800/50"
                     >
                       Cofnij wysłanie (u wszystkich)
                     </button>
@@ -644,14 +595,14 @@ const ChatWrapper: React.FC<ChatWrapperProps> = ({
                         onRemoveMessageForMe(deleteConfirmId);
                         setDeleteConfirmId(null);
                       }}
-                      className="w-full bg-zinc-950 hover:bg-zinc-800 text-zinc-300 font-semibold py-2.5 rounded-lg border border-zinc-800 transition-colors cursor-pointer text-xs uppercase tracking-wider outline-none"
+                      className="w-full py-4 text-sm font-semibold text-zinc-300 hover:bg-zinc-900/80 transition-colors border-b border-zinc-800/50"
                     >
                       Usuń dla mnie (tylko u mnie)
                     </button>
                   )}
                   <button
                     onClick={() => setDeleteConfirmId(null)}
-                    className="w-full bg-transparent hover:bg-zinc-950/40 text-zinc-500 hover:text-zinc-300 py-2 rounded-lg transition-colors text-xs font-semibold uppercase tracking-wider cursor-pointer outline-none"
+                    className="w-full py-4 text-sm font-semibold text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900/50 transition-colors"
                   >
                     Anuluj
                   </button>

@@ -29,7 +29,7 @@ export const CustomVideoPlayer: React.FC<CustomVideoPlayerProps> = ({
   const [duration, setDuration] = useState(0);
   const [isMuted, setIsMuted] = useState(false);
   const [volume, setVolume] = useState(1);
-  const [showControls, setShowControls] = useState(true);
+  const [_showControls, setShowControls] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
   const controlsTimeoutRef = useRef<number | null>(null);
@@ -191,19 +191,19 @@ export const CustomVideoPlayer: React.FC<CustomVideoPlayerProps> = ({
     return (
       <div 
         onClick={onPlayClick}
-        className="relative max-w-full max-h-72 rounded-lg overflow-hidden bg-zinc-950 border border-zinc-850 flex items-center justify-center cursor-pointer group"
+        
       >
         <video 
           ref={videoRef}
           src={src}
-          className="max-w-full max-h-72 object-contain hover:scale-[1.01] transition-transform duration-200 select-none"
+          
           muted
           playsInline
         />
         {/* Play overlay button */}
-        <div className="absolute inset-0 bg-black/40 group-hover:bg-black/50 transition-colors flex items-center justify-center">
-          <div className="w-12 h-12 rounded-lg bg-zinc-900/90 border border-zinc-800 flex items-center justify-center text-zinc-100 text-xl shadow-md transform group-hover:scale-105 group-active:scale-95 transition-transform duration-150">
-            <BsPlayFill className="ml-0.5" />
+        <div >
+          <div >
+            <BsPlayFill  />
           </div>
         </div>
       </div>
@@ -217,29 +217,25 @@ export const CustomVideoPlayer: React.FC<CustomVideoPlayerProps> = ({
       onMouseMove={resetControlsTimeout}
       onMouseLeave={() => isPlaying && setShowControls(false)}
       onClick={togglePlay}
-      className={`relative flex items-center justify-center bg-zinc-950/20 overflow-hidden select-none transition-all duration-150 ${
-        isFullscreen ? "w-screen h-screen" : "max-w-[95vw] max-h-[80vh] rounded-lg border border-zinc-800 shadow-2xl"
-      }`}
+      
     >
       <video
         ref={videoRef}
         src={src}
         autoPlay
         playsInline
-        className={`${isFullscreen ? "w-screen h-screen" : "max-w-full max-h-[72vh]"} object-contain`}
+        
         onContextMenu={(e) => e.preventDefault()}
       />
 
       {/* Custom Controls Bar */}
       <div 
         onClick={(e) => e.stopPropagation()} // Stop togglePlay click
-        className={`absolute bottom-0 left-0 right-0 p-4 bg-zinc-900/95 border-t border-zinc-800/80 flex flex-col gap-3 transition-opacity duration-150 z-20 ${
-          showControls ? "opacity-100" : "opacity-0 pointer-events-none"
-        }`}
+        
       >
         {/* Timeline Slider */}
-        <div className="flex items-center gap-3 w-full group/timeline">
-          <span className="text-[10px] font-semibold text-zinc-400 font-mono select-none">
+        <div >
+          <span >
             {formatTime(currentTime)}
           </span>
           
@@ -249,34 +245,32 @@ export const CustomVideoPlayer: React.FC<CustomVideoPlayerProps> = ({
             max={duration || 100}
             value={currentTime}
             onChange={handleSeek}
-            className="flex-1 h-1.5 rounded-lg appearance-none cursor-pointer bg-zinc-800 accent-zinc-100 hover:accent-white transition-all focus:outline-none"
-            style={{
-              background: `linear-gradient(to right, #f4f4f5 0%, #f4f4f5 ${duration ? (currentTime / duration) * 100 : 0}%, rgba(24, 24, 27, 0.5) ${duration ? (currentTime / duration) * 100 : 0}%, rgba(24, 24, 27, 0.5) 100%)`
-            }}
+            
+            
           />
 
-          <span className="text-[10px] font-semibold text-zinc-400 font-mono select-none">
+          <span >
             {formatTime(duration)}
           </span>
         </div>
 
         {/* Buttons Controls */}
-        <div className="flex items-center justify-between w-full font-mono">
-          <div className="flex items-center gap-4">
+        <div >
+          <div >
             {/* Play/Pause Button */}
             <button
               onClick={togglePlay}
-              className="text-zinc-350 hover:text-zinc-100 transition-colors p-1.5 rounded-lg hover:bg-zinc-800/60 active:scale-95 cursor-pointer text-lg shrink-0 outline-none"
+              
               title={isPlaying ? "Pauza" : "Odtwórz"}
             >
               {isPlaying ? <BsPauseFill /> : <BsPlayFill />}
             </button>
 
             {/* Volume Control */}
-            <div className="flex items-center gap-1.5 group/volume">
+            <div >
               <button
                 onClick={toggleMute}
-                className="text-zinc-350 hover:text-zinc-100 transition-colors p-1.5 rounded-lg hover:bg-zinc-800/60 active:scale-95 cursor-pointer text-base shrink-0 outline-none"
+                
                 title={isMuted ? "Wyłącz wyciszenie" : "Wycisz"}
               >
                 {isMuted || volume === 0 ? <BsVolumeMuteFill /> : <BsVolumeUpFill />}
@@ -289,10 +283,8 @@ export const CustomVideoPlayer: React.FC<CustomVideoPlayerProps> = ({
                 step={0.05}
                 value={isMuted ? 0 : volume}
                 onChange={handleVolumeChange}
-                className="w-16 sm:w-20 h-1 rounded-lg appearance-none cursor-pointer bg-zinc-800 accent-zinc-100 group-hover/volume:bg-zinc-700 transition-all focus:outline-none"
-                style={{
-                  background: `linear-gradient(to right, #f4f4f5 0%, #f4f4f5 ${isMuted ? 0 : volume * 100}%, rgba(24, 24, 27, 0.5) ${isMuted ? 0 : volume * 100}%, rgba(24, 24, 27, 0.5) 100%)`
-                }}
+                
+                
               />
             </div>
           </div>
@@ -300,7 +292,7 @@ export const CustomVideoPlayer: React.FC<CustomVideoPlayerProps> = ({
           {/* Fullscreen Button */}
           <button
             onClick={toggleFullscreen}
-            className="text-zinc-350 hover:text-zinc-100 transition-colors p-1.5 rounded-lg hover:bg-zinc-800/60 active:scale-95 cursor-pointer text-base shrink-0 outline-none"
+            
             title={isFullscreen ? "Wyjdź z pełnego ekranu" : "Pełny ekran"}
           >
             {isFullscreen ? <BsFullscreenExit /> : <BsFullscreen />}

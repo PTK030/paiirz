@@ -5,6 +5,7 @@ import random
 import os
 import time
 import uuid
+import hashlib
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -12,6 +13,17 @@ load_dotenv()
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", "some secret")
+
+# Generate secure cryptographic salt for Zero-Knowledge IP and Peer ID hashing
+IP_SALT = os.getenv("IP_SALT")
+if not IP_SALT:
+    IP_SALT = uuid.uuid4().hex
+
+def hash_identifier(val):
+    if not val:
+        return None
+    return hashlib.sha256(f"{val}:{IP_SALT}".encode("utf-8")).hexdigest()
+
 
 cors_origins = os.getenv("CORS_ALLOWED_ORIGINS", "*")
 if cors_origins != "*" and cors_origins:
@@ -88,31 +100,39 @@ def is_blocked(sid1, sid2):
     p2 = user_profiles.get(sid2)
     if not p1 or not p2:
         return False
-        
+
+    # Use hashed (Zero-Knowledge) identifiers — raw IPs are never stored
     id1_peer = p1.get("peerId")
     id1_ip = p1.get("ip")
     id2_peer = p2.get("peerId")
     id2_ip = p2.get("ip")
-    
+
+    # Localhost exception — prevents self-blocking in dev environment
+    if p1.get("is_localhost") and p2.get("is_localhost"):
+        return False
+
     for identifier in [id1_peer, id1_ip]:
         if identifier and identifier in persistent_blocks:
             if id2_peer in persistent_blocks[identifier] or id2_ip in persistent_blocks[identifier]:
                 return True
-                
+
     for identifier in [id2_peer, id2_ip]:
         if identifier and identifier in persistent_blocks:
             if id1_peer in persistent_blocks[identifier] or id1_ip in persistent_blocks[identifier]:
                 return True
-                
+
     return False
 
 def are_compatible(sid1, sid2):
+    print(f"DEBUG: Checking compatibility between {sid1} and {sid2}")
     if is_blocked(sid1, sid2):
+        print("DEBUG: blocked")
         return False
         
     p1 = user_profiles.get(sid1)
     p2 = user_profiles.get(sid2)
     if not p1 or not p2:
+        print("DEBUG: missing profile")
         return True
         
     g1 = p1.get("gender", "any")
@@ -120,44 +140,46 @@ def are_compatible(sid1, sid2):
     g2 = p2.get("gender", "any")
     tg2 = p2.get("targetGender", "any")
     
+    print(f"DEBUG: p1(gender={g1}, target={tg1}) vs p2(gender={g2}, target={tg2})")
     if tg1 != "any" and tg1 != g2:
+        print("DEBUG: p1 target mismatch")
         return False
     if tg2 != "any" and tg2 != g1:
+        print("DEBUG: p2 target mismatch")
         return False
-        
+    # --- Age range matching ---
     age1 = p1.get("age")
     age2 = p2.get("age")
-    if age1 is not None and age2 is not None:
-        if abs(age1 - age2) > 5:
-            return False
-            
-    loc1 = p1.get("location", "any")
-    loc2 = p2.get("location", "any")
-    if loc1 != "any" and loc2 != "any" and loc1 != loc2:
+    age_min1 = p1.get("ageMin")  # minimum age p1 is looking for
+    age_max1 = p1.get("ageMax")  # maximum age p1 is looking for
+    age_min2 = p2.get("ageMin")
+    age_max2 = p2.get("ageMax")
+
+    if age_min1 is not None and age2 is not None and age2 < age_min1:
         return False
-        
-    city1 = p1.get("city")
-    city2 = p2.get("city")
+    if age_max1 is not None and age2 is not None and age2 > age_max1:
+        return False
+    if age_min2 is not None and age1 is not None and age1 < age_min2:
+        return False
+    if age_max2 is not None and age1 is not None and age1 > age_max2:
+        return False
+
+    # --- Location matching (GPS-based via Browser Geolocation API) ---
+    lat1 = p1.get("lat")
+    lon1 = p1.get("lon")
+    lat2 = p2.get("lat")
+    lon2 = p2.get("lon")
     rad1 = p1.get("radius")
     rad2 = p2.get("radius")
-    
-    if city1 and city2 and (rad1 or rad2):
-        c1_key = city1.lower().strip()
-        c2_key = city2.lower().strip()
-        for pol, lat in [("ą","a"),("ć","c"),("ę","e"),("ł","l"),("ń","n"),("ó","o"),("ś","s"),("ź","z"),("ż","z")]:
-            c1_key = c1_key.replace(pol, lat)
-            c2_key = c2_key.replace(pol, lat)
-            
-        if c1_key in POLISH_CITIES and c2_key in POLISH_CITIES:
-            coord1 = POLISH_CITIES[c1_key]
-            coord2 = POLISH_CITIES[c2_key]
-            dist = get_distance(coord1[0], coord1[1], coord2[0], coord2[1])
-            
-            if rad1 and dist > rad1:
+
+    if lat1 is not None and lon1 is not None and lat2 is not None and lon2 is not None:
+        if rad1 is not None or rad2 is not None:
+            dist = get_distance(lat1, lon1, lat2, lon2)
+            if rad1 is not None and dist > rad1:
                 return False
-            if rad2 and dist > rad2:
+            if rad2 is not None and dist > rad2:
                 return False
-                
+
     return True
 
 
@@ -175,36 +197,61 @@ def handle_socket_connect():
 @socketio.on('join')
 def handle_connect(data=None):
     sid = request.sid
-    ip = request.remote_addr
-    
+    raw_ip = request.remote_addr
+    is_localhost = raw_ip in ("127.0.0.1", "::1", "localhost")
+
+    # Zero-Knowledge: hash IP and Peer ID with server-side salt.
+    # The raw IP is NEVER stored in memory — only the SHA-256 hash.
+    hashed_ip = hash_identifier(raw_ip)
+    raw_peer_id = data.get("peerId") if data else None
+    hashed_peer_id = hash_identifier(raw_peer_id)
+
     # Parse profile / preferences
+    def safe_int(val):
+        try:
+            return int(val) if val is not None and str(val).lstrip('-').isdigit() else None
+        except (ValueError, TypeError):
+            return None
+
+    def safe_float(val):
+        try:
+            return float(val) if val is not None else None
+        except (ValueError, TypeError):
+            return None
+
     profile = {}
     if data:
         profile = {
-            "peerId": data.get("peerId"),
-            "ip": ip,
+            "peerId": hashed_peer_id,
+            "ip": hashed_ip,
+            "is_localhost": is_localhost,
             "gender": data.get("gender", "any"),
             "targetGender": data.get("targetGender", "any"),
-            "age": int(data["age"]) if data.get("age") is not None and str(data["age"]).isdigit() else None,
-            "location": data.get("location", "any"),
-            "city": data.get("city"),
-            "radius": int(data["radius"]) if data.get("radius") is not None and str(data["radius"]).isdigit() else None
+            "age": safe_int(data.get("age")),
+            "ageMin": safe_int(data.get("ageMin")),
+            "ageMax": safe_int(data.get("ageMax")),
+            "lat": safe_float(data.get("lat")),
+            "lon": safe_float(data.get("lon")),
+            "radius": safe_int(data.get("radius")),
         }
     else:
         profile = {
             "peerId": None,
-            "ip": ip,
+            "ip": hashed_ip,
+            "is_localhost": is_localhost,
             "gender": "any",
             "targetGender": "any",
             "age": None,
-            "location": "any",
-            "city": None,
-            "radius": None
+            "ageMin": None,
+            "ageMax": None,
+            "lat": None,
+            "lon": None,
+            "radius": None,
         }
-        
+
     user_profiles[sid] = profile
-    print(f"Joined queue: {sid} with profile: {profile}")
-    
+    print(f"Joined queue: {sid} (localhost={is_localhost})")
+
     # Find compatible waiting room (where len(users) == 1)
     compatible_room = None
     for room, rdata in list(rooms.items()):
@@ -213,7 +260,7 @@ def handle_connect(data=None):
             if are_compatible(sid, waiting_sid):
                 compatible_room = room
                 break
-                
+
     if compatible_room:
         rooms[compatible_room]["users"].append(sid)
         rooms[compatible_room]["contacts"][sid] = None
@@ -241,32 +288,32 @@ def handle_leave(data):
 def handle_block_user(data):
     room = data.get('room')
     sid = request.sid
-    
+
     if not room or room not in rooms:
         return
-        
+
     users = rooms[room]["users"]
     if sid not in users:
         return
-        
+
     # Find partner sid
     partner_sid = None
     for u in users:
         if u != sid:
             partner_sid = u
             break
-            
+
     if partner_sid:
         p_me = user_profiles.get(sid)
         p_partner = user_profiles.get(partner_sid)
-        
+
         if p_me and p_partner:
+            # All identifiers are already hashed (Zero-Knowledge) — safe to store in block list
             my_peer = p_me.get("peerId")
             my_ip = p_me.get("ip")
             partner_peer = p_partner.get("peerId")
             partner_ip = p_partner.get("ip")
-            
-            # Record blocks for all identifier pairs for maximum security
+
             for my_id in [my_peer, my_ip]:
                 if my_id:
                     blocked_set = persistent_blocks.setdefault(my_id, set())
@@ -274,7 +321,7 @@ def handle_block_user(data):
                         blocked_set.add(partner_peer)
                     if partner_ip:
                         blocked_set.add(partner_ip)
-                        
+
     # Inform room and clear room
     emit("room_left", "blocked", to=room)
     rooms.pop(room, None)
@@ -304,20 +351,21 @@ def handle_share_contact(data):
     room = data.get('room')
     contact = data.get('contact')
     sid = request.sid
-    
+
     if room and room in rooms:
         if not contact or not isinstance(contact, str):
             return
-        
-        contact = contact[:100].strip()
+
+        # Increase limit to 1000 chars to accommodate AES-GCM encrypted base64 payload
+        contact = contact[:1000].strip()
         rooms[room]["contacts"][sid] = contact
-        
+
         partner_sid = None
         for u in rooms[room]["users"]:
             if u != sid:
                 partner_sid = u
                 break
-                
+
         if partner_sid:
             partner_contact = rooms[room]["contacts"].get(partner_sid)
             if partner_contact:
@@ -335,21 +383,24 @@ def handle_message(data):
     audio = data.get('audio')
     video = data.get('video')
     msg_id = data.get('id')
-    
+
     vanishing = data.get('vanishing')
     view_once = data.get('viewOnce')
-    
+    # E2EE metadata: IV is passed alongside the encrypted ciphertext
+    e2e = data.get('e2e')  # { iv: string } — tells receiver how to decrypt
+
     if not room or not (message or image or audio or video):
         return
 
     # Backend validation (Defense-in-depth)
-    if image and len(image) > 8 * 1024 * 1024:  # Max ~6MB file size
+    # Limits are slightly increased (~5%) to accommodate AES-GCM ciphertext + IV overhead
+    if image and len(image) > 9 * 1024 * 1024:
         return
-    if video and len(video) > 22 * 1024 * 1024:  # Max ~16.5MB file size
+    if video and len(video) > 24 * 1024 * 1024:
         return
 
     now = time.time()
-    
+
     # 1. Check if user is currently blocked
     blocked_until = blocked_users.get(sid, 0.0)
     if now < blocked_until:
@@ -358,13 +409,13 @@ def handle_message(data):
             "duration": int(max(1, round(blocked_until - now)))
         }, to=sid)
         return
-        
+
     # 2. Check if user exceeded the rate limit (max 5 messages in 3 seconds)
     timestamps = message_timestamps.get(sid, [])
     timestamps = [t for t in timestamps if now - t <= 3.0]
     timestamps.append(now)
     message_timestamps[sid] = timestamps
-    
+
     if len(timestamps) > 5:
         blocked_until = now + 5.0
         blocked_users[sid] = blocked_until
@@ -383,6 +434,7 @@ def handle_message(data):
         "video": video,
         "vanishing": vanishing,
         "viewOnce": view_once,
+        "e2e": e2e,
         "reactions": {}
     }, to=room)
 
@@ -816,6 +868,114 @@ def handle_action_icebreaker(data):
                 "ready_for_next": []
             }
         }, to=room)
+
+
+# --- Private Room Handlers ---
+
+@socketio.on('create_private_room')
+def handle_create_private_room(data):
+    """Create an invite-only private room with a 6-character code."""
+    sid = request.sid
+    room_code = data.get('roomCode', '')
+    no_screenshots = data.get('noScreenshots', False)
+    notify_on_tab_leave = data.get('notifyOnTabLeave', False)
+
+    if not room_code or len(room_code) != 6:
+        emit('private_room_error', {'message': 'Nieprawidłowy kod pokoju.'}, to=sid)
+        return
+
+    room_id = f"private_{room_code}"
+    if room_id in rooms:
+        emit('private_room_error', {'message': 'Pokój z tym kodem już istnieje. Spróbuj ponownie.'}, to=sid)
+        return
+
+    rooms[room_id] = {
+        "users": [sid],
+        "contacts": {sid: None},
+        "active_games": {},
+        "is_private": True,
+        "owner_sid": sid,
+        "no_screenshots": bool(no_screenshots),
+        "notify_on_tab_leave": bool(notify_on_tab_leave)
+    }
+    join_room(room_id)
+    emit('private_room_created', {'room': room_id, 'code': room_code}, to=sid)
+    print(f"Private room created: {room_id} by {sid}")
+
+
+@socketio.on('join_private_room')
+def handle_join_private_room(data):
+    """Join an existing private room using its 6-character code."""
+    sid = request.sid
+    room_code = data.get('roomCode', '')
+
+    if not room_code:
+        emit('private_room_error', {'message': 'Brakuje kodu pokoju.'}, to=sid)
+        return
+
+    room_id = f"private_{room_code}"
+    if room_id not in rooms:
+        emit('private_room_error', {'message': 'Pokój nie istnieje lub wygasł.'}, to=sid)
+        return
+
+    room_data = rooms[room_id]
+    if len(room_data['users']) >= 2:
+        emit('private_room_error', {'message': 'Pokój jest pełny. Tylko 2 osoby mogą dołączyć.'}, to=sid)
+        return
+
+    if sid in room_data['users']:
+        emit('private_room_error', {'message': 'Już jesteś w tym pokoju.'}, to=sid)
+        return
+
+    room_data['users'].append(sid)
+    room_data['contacts'][sid] = None
+    join_room(room_id)
+    emit('room_joined', {'room': room_id, 'sid': sid}, to=room_id)
+    print(f"User {sid} joined private room: {room_id}")
+
+
+@socketio.on('tab_visibility_change')
+def handle_tab_visibility_change(data):
+    """Notify partner when user switches tabs (only if room has flag enabled)."""
+    room = data.get('room')
+    hidden = data.get('hidden', False)
+
+    if not room or room not in rooms:
+        return
+
+    room_data = rooms[room]
+    if room_data.get('notify_on_tab_leave'):
+        emit('partner_tab_hidden', {'hidden': hidden}, to=room, include_self=False)
+
+
+# --- E2EE Key Exchange Relay ---
+# The server is a blind relay: it only forwards ECDH public keys between peers.
+# It never has access to the derived shared secret or any plaintext.
+@socketio.on('e2e_key_exchange')
+def handle_e2e_key_exchange(data):
+    room = data.get('room')
+    public_key = data.get('publicKey')
+    if room and room in rooms and public_key and isinstance(public_key, str):
+        # Validate key length: base64-encoded P-256 raw public key is 88 chars
+        if len(public_key) > 200:
+            return
+        emit('e2e_key_exchange', {
+            'sender_sid': request.sid,
+            'publicKey': public_key
+        }, to=room, include_self=False)
+
+
+# --- WebRTC Signaling Relay ---
+# The server only forwards signaling packets (SDP offer/answer, ICE candidates)
+# between the two peers in a room. All actual media travels directly P2P.
+@socketio.on('webrtc_signal')
+def handle_webrtc_signal(data):
+    room = data.get('room')
+    if room and room in rooms:
+        emit('webrtc_signal', {
+            'sender_sid': request.sid,
+            'signal': data.get('signal')
+        }, to=room, include_self=False)
 
 
 if __name__ == "__main__":

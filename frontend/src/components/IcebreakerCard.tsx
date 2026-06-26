@@ -39,7 +39,7 @@ export const IcebreakerCard: React.FC<IcebreakerCardProps> = ({
   const isThisOrThat = icebreaker.type === "this_or_that";
   const readyForNext = icebreaker.ready_for_next || [];
 
-  // Card transition settings (no spring, linear fade-in)
+  // Card transition settings
   const containerVariants = {
     hidden: { opacity: 0, y: 8 },
     visible: { 
@@ -62,13 +62,13 @@ export const IcebreakerCard: React.FC<IcebreakerCardProps> = ({
         variants={containerVariants}
         initial="hidden"
         animate="visible"
-        className="bg-zinc-950/40 border border-zinc-800/80 rounded-2xl p-5 max-w-sm w-full shadow-xl flex flex-col gap-4 text-zinc-200 select-none my-3 backdrop-blur-md font-sans"
+        className="w-full max-w-sm bg-zinc-900/80 border border-zinc-800/80 rounded-2xl overflow-hidden backdrop-blur-md shadow-xl my-4 mx-auto"
       >
-        <div className="flex items-center justify-between border-b border-zinc-800 pb-2">
-          <span className="text-[10px] uppercase font-sans font-extrabold tracking-widest text-zinc-400">{gameName}</span>
+        <div className="flex items-center justify-between px-4 py-3 bg-zinc-800/50 border-b border-zinc-700/50">
+          <span className="text-xs font-bold text-zinc-300 tracking-wider uppercase">{gameName}</span>
           <button
             onClick={() => onAction(msgId, "", "quit")}
-            className="text-zinc-500 hover:text-zinc-350 text-xs transition-colors cursor-pointer select-none outline-none font-sans"
+            className="text-zinc-500 hover:text-red-400 transition-colors w-6 h-6 flex items-center justify-center rounded-full hover:bg-zinc-800"
             title="Wyjdź z gry"
           >
             ✕
@@ -83,13 +83,13 @@ export const IcebreakerCard: React.FC<IcebreakerCardProps> = ({
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={contentTransition}
-              className="flex flex-col items-center py-2 gap-3"
+              className="p-5 flex flex-col items-center text-center gap-4"
             >
-              <p className="text-xs sm:text-sm text-zinc-400 text-center font-sans leading-relaxed">
+              <p className="text-sm text-zinc-400">
                 Wysłano zaproszenie do gry. Oczekiwanie na akceptację...
               </p>
-              <div className="flex items-center gap-2 text-xs text-zinc-500 justify-center py-1 font-sans">
-                <div className="w-1.5 h-1.5 rounded-full bg-zinc-650 animate-pulse"></div>
+              <div className="flex items-center gap-2 text-xs font-semibold text-indigo-400 bg-indigo-500/10 px-3 py-1.5 rounded-full">
+                <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse"></div>
                 <span>Czekam na drugiego gracza</span>
               </div>
             </motion.div>
@@ -100,21 +100,21 @@ export const IcebreakerCard: React.FC<IcebreakerCardProps> = ({
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={contentTransition}
-              className="flex flex-col gap-4"
+              className="p-5 flex flex-col items-center text-center gap-5"
             >
-              <p className="text-xs sm:text-sm text-zinc-350 text-center font-sans font-medium">
+              <p className="text-sm font-medium text-zinc-200">
                 Rozmówca zaprosił Cię do gry.
               </p>
-              <div className="flex gap-2.5">
+              <div className="flex w-full gap-3">
                 <button
                   onClick={() => onAction(msgId, "", "accept")}
-                  className="flex-1 bg-white hover:bg-zinc-150 text-zinc-950 font-sans font-extrabold py-2.5 px-3.5 rounded-xl text-xs transition-all duration-200 cursor-pointer text-center outline-none border border-transparent shadow-md"
+                  className="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold py-2.5 rounded-xl transition-colors shadow-lg shadow-indigo-500/20 active:scale-[0.98]"
                 >
                   Dołącz
                 </button>
                 <button
                   onClick={() => onAction(msgId, "", "decline")}
-                  className="flex-1 bg-zinc-900/60 hover:bg-zinc-900 border border-zinc-850 text-zinc-400 hover:text-zinc-200 font-sans font-bold py-2.5 px-3.5 rounded-xl text-xs cursor-pointer transition-all duration-200 text-center outline-none border border-transparent shadow-sm"
+                  className="flex-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-sm font-semibold py-2.5 rounded-xl transition-colors active:scale-[0.98]"
                 >
                   Odrzuć
                 </button>
@@ -135,15 +135,15 @@ export const IcebreakerCard: React.FC<IcebreakerCardProps> = ({
         variants={containerVariants}
         initial="hidden"
         animate="visible"
-        className="bg-zinc-950/40 border border-zinc-800/80 rounded-2xl p-5 max-w-sm w-full shadow-xl flex flex-col gap-3 text-zinc-455 select-none my-3 backdrop-blur-md font-sans"
+        className="w-full max-w-sm bg-zinc-900/40 border border-zinc-800/40 rounded-2xl p-4 my-2 mx-auto flex flex-col items-center text-center gap-2 opacity-70"
       >
-        <div className="flex items-center gap-1.5 opacity-65 border-b border-zinc-800 pb-2">
-          <span className="text-[10px] uppercase font-sans font-extrabold tracking-widest">{gameName}</span>
+        <div className="text-[10px] font-bold text-zinc-500 tracking-wider uppercase">
+          <span>{gameName}</span>
         </div>
         <motion.p 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="text-xs text-center italic py-2 text-zinc-550 font-sans font-medium"
+          className="text-xs text-zinc-500 italic"
         >
           Zaproszenie zostało odrzucone.
         </motion.p>
@@ -160,15 +160,15 @@ export const IcebreakerCard: React.FC<IcebreakerCardProps> = ({
         variants={containerVariants}
         initial="hidden"
         animate="visible"
-        className="bg-zinc-950/40 border border-zinc-800/80 rounded-2xl p-5 max-w-sm w-full shadow-xl flex flex-col gap-3 text-zinc-455 select-none my-3 backdrop-blur-md font-sans"
+        className="w-full max-w-sm bg-zinc-900/40 border border-zinc-800/40 rounded-2xl p-4 my-2 mx-auto flex flex-col items-center text-center gap-2 opacity-70"
       >
-        <div className="flex items-center gap-1.5 opacity-65 border-b border-zinc-800 pb-2">
-          <span className="text-[10px] uppercase font-sans font-extrabold tracking-widest">{gameName}</span>
+        <div className="text-[10px] font-bold text-zinc-500 tracking-wider uppercase">
+          <span>{gameName}</span>
         </div>
         <motion.p 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="text-xs text-center italic py-2 text-zinc-550 font-sans font-medium"
+          className="text-xs text-zinc-500 italic"
         >
           Gra została zakończona.
         </motion.p>
@@ -190,29 +190,29 @@ export const IcebreakerCard: React.FC<IcebreakerCardProps> = ({
         variants={containerVariants}
         initial="hidden"
         animate="visible"
-        className="bg-zinc-950/40 border border-zinc-800/80 rounded-2xl p-5 max-w-sm w-full shadow-xl flex flex-col gap-4 text-zinc-200 select-none my-3 backdrop-blur-md font-sans"
+        className="w-full max-w-sm bg-zinc-900/90 border border-zinc-800/80 rounded-2xl overflow-hidden backdrop-blur-xl shadow-2xl my-4 mx-auto ring-1 ring-white/5"
       >
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-zinc-800 pb-2">
-          <div className="flex items-center gap-1.5">
-            <span className="text-[10px] uppercase font-sans font-extrabold tracking-widest text-zinc-400">To czy To</span>
-            <span className="text-[9px] bg-zinc-900/60 text-zinc-450 border border-zinc-850/60 px-2 py-0.5 rounded-full font-mono">
+        <div className="flex items-center justify-between px-5 py-3 bg-gradient-to-r from-indigo-500/10 to-transparent border-b border-indigo-500/20">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-bold text-indigo-300 tracking-wider uppercase">To czy To</span>
+            <span className="text-[10px] bg-indigo-500/20 text-indigo-300 px-2 py-0.5 rounded-md font-bold">
               Runda {currentRound}
             </span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             {icebreaker.status === "revealed" && myVote === partnerVote && (
               <motion.span 
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="bg-green-500/10 text-green-400 border border-green-500/20 text-[9px] font-extrabold px-2 py-0.5 rounded-full shadow-[0_0_8px_rgba(34,197,94,0.1)]"
+                className="text-[10px] font-extrabold text-emerald-400 tracking-wider bg-emerald-500/10 px-2 py-1 rounded"
               >
                 ZGODNOŚĆ
               </motion.span>
             )}
             <button
               onClick={() => onAction(msgId, "", "quit")}
-              className="text-zinc-500 hover:text-zinc-350 text-xs transition-colors cursor-pointer outline-none"
+              className="text-zinc-500 hover:text-red-400 transition-colors"
               title="Wyjdź z gry"
             >
               ✕
@@ -223,7 +223,7 @@ export const IcebreakerCard: React.FC<IcebreakerCardProps> = ({
         {/* Question */}
         <motion.h3 
           layout="position"
-          className="font-extrabold text-zinc-100 text-sm sm:text-base leading-snug font-sans"
+          className="text-lg font-bold text-white text-center py-6 px-4 bg-zinc-800/20 border-b border-zinc-800/40"
         >
           {icebreaker.question}
         </motion.h3>
@@ -239,16 +239,16 @@ export const IcebreakerCard: React.FC<IcebreakerCardProps> = ({
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -5 }}
                 transition={contentTransition}
-                className="flex flex-col gap-2"
+                className="p-5 flex flex-col gap-3"
               >
                 {options.map((opt, idx) => (
                   <button
                     key={idx}
                     onClick={() => onAction(msgId, idx, "vote")}
-                    className="w-full bg-zinc-900/40 hover:bg-zinc-800/40 text-zinc-200 text-xs sm:text-sm font-bold py-3 px-4 rounded-xl border border-zinc-850 hover:border-indigo-500/35 transition-all cursor-pointer text-left flex items-center justify-between outline-none shadow-sm"
+                    className="w-full flex items-center justify-between px-5 py-3.5 bg-zinc-800/50 hover:bg-indigo-500/20 border border-zinc-700/50 hover:border-indigo-500/50 rounded-xl transition-all group active:scale-[0.98]"
                   >
-                    <span>{opt}</span>
-                    <span className="text-[9px] text-zinc-500 uppercase tracking-wider font-extrabold">Wybierz</span>
+                    <span className="text-sm font-semibold text-zinc-200 group-hover:text-indigo-100">{opt}</span>
+                    <span className="text-xs font-bold text-zinc-500 group-hover:text-indigo-400 uppercase tracking-wider">Wybierz</span>
                   </button>
                 ))}
               </motion.div>
@@ -260,16 +260,16 @@ export const IcebreakerCard: React.FC<IcebreakerCardProps> = ({
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -5 }}
                 transition={contentTransition}
-                className="flex flex-col gap-3.5 py-1"
+                className="p-6 flex flex-col items-center gap-5"
               >
-                <div className="bg-zinc-950/60 border border-zinc-850 p-3.5 rounded-xl flex flex-col gap-1 text-xs shadow-inner">
-                  <span className="text-zinc-500 font-bold uppercase tracking-wider text-[9px]">Twój wybór:</span>
-                  <span className="text-zinc-200 font-extrabold text-sm font-sans">
+                <div className="flex flex-col items-center gap-1.5">
+                  <span className="text-xs text-zinc-500 uppercase tracking-wider font-bold">Twój wybór:</span>
+                  <span className="text-lg font-bold text-indigo-400">
                     {options[Number(myVote)]}
                   </span>
                 </div>
-                <div className="flex items-center gap-2 text-xs text-zinc-500 justify-center py-1">
-                  <div className="w-1.5 h-1.5 rounded-full bg-zinc-700 animate-pulse"></div>
+                <div className="flex items-center gap-2 text-xs font-semibold text-zinc-400 bg-zinc-800/50 px-4 py-2 rounded-full">
+                  <div className="w-1.5 h-1.5 rounded-full bg-zinc-400 animate-pulse"></div>
                   <span>Oczekiwanie na odpowiedź obcego</span>
                 </div>
               </motion.div>
@@ -281,37 +281,30 @@ export const IcebreakerCard: React.FC<IcebreakerCardProps> = ({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={contentTransition}
-              className="flex flex-col gap-3"
+              className="p-5 flex flex-col gap-5"
             >
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-3">
                 {options.map((opt, idx) => {
                   const isMyChoice = Number(myVote) === idx;
                   const isPartnerChoice = Number(partnerVote) === idx;
+                  const isMatch = isMyChoice && isPartnerChoice;
 
                   return (
                     <motion.div
                       layout
                       key={idx}
-                      className={`relative w-full rounded-xl border p-3.5 flex flex-col gap-1 text-xs sm:text-sm font-bold transition-all ${
-                        isMyChoice && isPartnerChoice
-                          ? "bg-green-500/5 border-green-500/35 text-green-300"
-                          : isMyChoice
-                          ? "bg-indigo-500/5 border-indigo-500/35 text-indigo-300"
-                          : isPartnerChoice
-                          ? "bg-zinc-900/30 border-zinc-800/80 text-zinc-400"
-                          : "bg-zinc-950/10 border-zinc-900 text-zinc-650"
-                      }`}
+                      className={`relative overflow-hidden rounded-xl border ${isMatch ? "bg-emerald-500/10 border-emerald-500/30" : isMyChoice ? "bg-indigo-500/10 border-indigo-500/30" : isPartnerChoice ? "bg-cyan-500/10 border-cyan-500/30" : "bg-zinc-800/30 border-zinc-800/50 opacity-50"}`}
                     >
-                      <div className="flex items-center justify-between z-10">
-                        <span className="font-sans font-semibold">{opt}</span>
+                      <div className="px-4 py-3 flex items-center justify-between">
+                        <span className={`text-sm font-bold ${isMatch ? "text-emerald-300" : isMyChoice || isPartnerChoice ? "text-zinc-200" : "text-zinc-500"}`}>{opt}</span>
                         <div className="flex gap-1.5">
                           {isMyChoice && (
-                            <span className="bg-indigo-500/10 border border-indigo-500/25 text-[8px] font-extrabold px-1.5 py-0.5 rounded text-indigo-400">
+                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${isMatch ? "bg-emerald-500/20 text-emerald-400" : "bg-indigo-500/20 text-indigo-400"}`}>
                               TY
                             </span>
                           )}
                           {isPartnerChoice && (
-                            <span className="bg-zinc-900 border border-zinc-800 text-[8px] font-extrabold px-1.5 py-0.5 rounded text-zinc-500">
+                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${isMatch ? "bg-emerald-500/20 text-emerald-400" : "bg-cyan-500/20 text-cyan-400"}`}>
                               OBCY
                             </span>
                           )}
@@ -324,14 +317,14 @@ export const IcebreakerCard: React.FC<IcebreakerCardProps> = ({
 
               {/* Next Round Button with Dual Consent */}
               {amIReady ? (
-                <div className="w-full mt-2 bg-zinc-900/60 text-zinc-550 border border-zinc-850/80 font-bold py-3 px-4 rounded-xl text-xs text-center flex items-center justify-center gap-2 shadow-inner">
-                  <div className="w-1.5 h-1.5 rounded-full bg-zinc-700 animate-pulse"></div>
+                <div className="flex items-center justify-center gap-2 text-xs font-semibold text-zinc-400 py-2">
+                  <div className="w-1.5 h-1.5 rounded-full bg-zinc-500 animate-pulse"></div>
                   <span>Oczekiwanie na gotowość obcego (1/2)</span>
                 </div>
               ) : (
                 <button
                   onClick={() => onAction(msgId, "", "next_round")}
-                  className="w-full mt-2 bg-white hover:bg-zinc-150 text-zinc-950 font-extrabold py-3 px-4 rounded-xl transition-all duration-200 cursor-pointer text-xs sm:text-sm text-center flex items-center justify-center gap-1.5 outline-none border border-transparent shadow-md"
+                  className={`w-full py-3 rounded-xl font-semibold text-sm transition-all active:scale-[0.98] ${isPartnerReady ? "bg-indigo-500 text-white shadow-lg shadow-indigo-500/20 animate-pulse-soft" : "bg-zinc-800 hover:bg-zinc-700 text-zinc-300"}`}
                 >
                   <span>{isPartnerReady ? "Obcy czeka! Następna runda" : "Następna runda"}</span>
                 </button>
@@ -357,29 +350,25 @@ export const IcebreakerCard: React.FC<IcebreakerCardProps> = ({
       variants={containerVariants}
       initial="hidden"
       animate="visible"
-      className="bg-zinc-950/40 border border-zinc-800/80 rounded-2xl p-5 max-w-sm w-full shadow-xl flex flex-col gap-4 text-zinc-200 select-none my-3 backdrop-blur-md font-sans"
+      className="w-full max-w-sm bg-zinc-900/90 border border-zinc-800/80 rounded-2xl overflow-hidden backdrop-blur-xl shadow-2xl my-4 mx-auto ring-1 ring-white/5"
     >
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-zinc-800 pb-2">
-        <div className="flex items-center gap-1.5">
-          <span className="text-[10px] uppercase font-sans font-extrabold tracking-widest text-zinc-400">Prawda czy Wyzwanie</span>
-          <span className="text-[9px] bg-zinc-900/60 text-zinc-450 border border-zinc-850/60 px-2 py-0.5 rounded-full font-mono">
+      <div className="flex items-center justify-between px-5 py-3 bg-gradient-to-r from-rose-500/10 to-transparent border-b border-rose-500/20">
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-bold text-rose-300 tracking-wider uppercase">Prawda czy Wyzwanie</span>
+          <span className="text-[10px] bg-rose-500/20 text-rose-300 px-2 py-0.5 rounded-md font-bold">
             Runda {currentRound}
           </span>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           {icebreaker.status === "pending" && (
-            <span className={`text-[9px] font-extrabold px-2 py-0.5 rounded-full border ${
-              isMyTurn 
-                ? "bg-indigo-500/10 text-indigo-400 border-indigo-500/20 shadow-[0_0_8px_rgba(99,102,241,0.1)] animate-pulse" 
-                : "bg-zinc-900/60 text-zinc-450 border-zinc-850/60 border-transparent"
-            }`}>
+            <span className={`text-[10px] font-extrabold tracking-wider px-2 py-0.5 rounded ${isMyTurn ? "bg-indigo-500/20 text-indigo-400" : "bg-zinc-800 text-zinc-400"}`}>
               {isMyTurn ? "TWÓJ RUCH" : "RUCH OBCEGO"}
             </span>
           )}
           <button
             onClick={() => onAction(msgId, "", "quit")}
-            className="text-zinc-500 hover:text-zinc-350 text-xs transition-colors cursor-pointer outline-none"
+            className="text-zinc-500 hover:text-red-400 transition-colors"
             title="Wyjdź z gry"
           >
             ✕
@@ -397,21 +386,21 @@ export const IcebreakerCard: React.FC<IcebreakerCardProps> = ({
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -5 }}
               transition={contentTransition}
-              className="flex flex-col gap-3"
+              className="p-5 flex flex-col gap-4"
             >
-              <p className="text-xs text-zinc-400 text-center font-medium leading-normal">
+              <p className="text-sm font-semibold text-zinc-300 text-center mb-1">
                 Twoja kolej. Wybierz kategorię:
               </p>
-              <div className="flex gap-2.5">
+              <div className="flex gap-3">
                 <button
                   onClick={() => onAction(msgId, "truth", "vote")}
-                  className="flex-1 bg-zinc-900/60 hover:bg-zinc-800/60 border border-zinc-850 hover:border-indigo-500/35 text-zinc-200 font-sans font-extrabold py-2.5 px-3.5 rounded-xl text-xs transition-all duration-200 cursor-pointer text-center outline-none shadow-sm"
+                  className="flex-1 py-4 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 hover:border-emerald-500/50 text-emerald-400 font-bold rounded-xl transition-all shadow-lg active:scale-[0.98]"
                 >
                   Prawda
                 </button>
                 <button
                   onClick={() => onAction(msgId, "dare", "vote")}
-                  className="flex-1 bg-zinc-900/60 hover:bg-zinc-800/60 border border-zinc-850 hover:border-indigo-500/35 text-zinc-200 font-sans font-extrabold py-2.5 px-3.5 rounded-xl text-xs transition-all duration-200 cursor-pointer text-center outline-none shadow-sm"
+                  className="flex-1 py-4 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 hover:border-rose-500/50 text-rose-400 font-bold rounded-xl transition-all shadow-lg active:scale-[0.98]"
                 >
                   Wyzwanie
                 </button>
@@ -425,11 +414,11 @@ export const IcebreakerCard: React.FC<IcebreakerCardProps> = ({
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={contentTransition}
-              className="flex flex-col items-center justify-center py-4 gap-2.5"
+              className="p-8 flex flex-col items-center justify-center gap-4"
             >
-              <div className="flex items-center gap-2 text-xs text-zinc-500 justify-center">
-                <div className="w-1.5 h-1.5 rounded-full bg-zinc-700 animate-pulse"></div>
-                <span className="font-medium text-zinc-450">
+              <div className="flex items-center gap-3 bg-zinc-800/30 px-5 py-3 rounded-full border border-zinc-800/50">
+                <div className="w-2 h-2 rounded-full bg-indigo-400 animate-ping"></div>
+                <span className="text-sm font-medium text-zinc-400">
                   Obcy wybiera pomiędzy Prawdą a Wyzwaniem...
                 </span>
               </div>
@@ -442,42 +431,44 @@ export const IcebreakerCard: React.FC<IcebreakerCardProps> = ({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={contentTransition}
-            className="flex flex-col gap-4"
+            className="p-5 flex flex-col gap-5"
           >
-            <div className="flex items-center gap-2 text-xs">
-              <span className={`font-sans font-bold ${isMyChoice ? "text-zinc-300" : "text-zinc-500"}`}>
+            <div className="flex flex-col items-center gap-1.5">
+              <span className="text-[10px] uppercase tracking-wider font-bold text-zinc-500">
                 {voterLabel}
               </span>
-              <span className="px-2.5 py-0.5 rounded-full bg-zinc-900/60 border border-zinc-850/60 text-[9px] font-extrabold uppercase tracking-wider text-indigo-400">
+              <span className={`text-xl font-black uppercase tracking-widest ${icebreaker.question === "Prawda" ? "text-emerald-400" : "text-rose-400"}`}>
                 {icebreaker.question === "Prawda" ? "Prawda" : "Wyzwanie"}
               </span>
             </div>
 
             {/* Random Prompt Box */}
-            <div className="relative overflow-hidden bg-gradient-to-b from-zinc-900/80 to-zinc-950/90 border border-zinc-800/80 rounded-xl p-4 sm:p-5 italic text-zinc-100 text-sm sm:text-base leading-relaxed text-center font-sans shadow-inner shadow-black/40">
-              <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/5 via-transparent to-violet-500/5 pointer-events-none" />
-              "{icebreaker.result}"
+            <div className="bg-zinc-800/40 border border-zinc-700/50 rounded-xl p-6 relative">
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-1 bg-zinc-700 rounded-full" />
+              <p className="text-base sm:text-lg font-bold text-white text-center italic leading-relaxed">
+                "{icebreaker.result}"
+              </p>
             </div>
 
             {/* Dual Consent Complete Turn Action */}
             {!isVoterReady ? (
               // Voter hasn't clicked "Wykonane" yet
               amIVoter ? (
-                <div className="flex flex-col gap-3 mt-1">
-                  <p className="text-[10px] text-zinc-500 text-center leading-normal italic font-medium">
+                <div className="flex flex-col gap-3">
+                  <p className="text-xs text-center text-zinc-400 mb-1">
                     Odpowiedz na czacie, a następnie prześlij turę dalej:
                   </p>
-                  <div className="flex gap-2.5">
+                  <div className="flex gap-2">
                     <button
                       onClick={() => onAction(msgId, "", "complete_turn")}
-                      className="flex-1 bg-white hover:bg-zinc-150 text-zinc-950 font-sans font-extrabold py-2.5 px-3.5 rounded-xl text-xs transition-all duration-200 cursor-pointer text-center outline-none border border-transparent shadow-md"
+                      className="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold py-3 rounded-xl transition-colors shadow-lg shadow-indigo-500/20 active:scale-[0.98]"
                       title="Przekaż turę"
                     >
                       <span>Wykonane</span>
                     </button>
                     <button
                       onClick={() => onAction(msgId, "", "skip_question")}
-                      className="bg-zinc-900/60 hover:bg-zinc-900 border border-zinc-850 text-zinc-400 hover:text-zinc-200 font-sans font-bold py-2.5 px-3.5 rounded-xl text-xs cursor-pointer transition-all duration-200 text-center outline-none shadow-sm"
+                      className="px-4 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-bold py-3 rounded-xl transition-colors border border-zinc-700 active:scale-[0.98]"
                       title="Wylosuj inne"
                     >
                       <span>Losuj inne</span>
@@ -485,26 +476,26 @@ export const IcebreakerCard: React.FC<IcebreakerCardProps> = ({
                   </div>
                 </div>
               ) : (
-                <div className="flex items-center gap-2 justify-center text-xs text-zinc-500 py-2">
-                  <div className="w-1.5 h-1.5 rounded-full bg-zinc-700 animate-pulse"></div>
-                  <span className="font-medium text-zinc-450">Oczekiwanie na ruch obcego...</span>
+                <div className="flex items-center justify-center gap-2 text-xs font-semibold text-zinc-400 py-2">
+                  <div className="w-1.5 h-1.5 rounded-full bg-zinc-500 animate-pulse"></div>
+                  <span className="italic">Oczekiwanie na ruch obcego...</span>
                 </div>
               )
             ) : (
               // Voter clicked "Wykonane", waiting for partner to agree to transition
               amIVoter ? (
-                <div className="w-full mt-2 bg-zinc-900/60 text-zinc-550 border border-zinc-850/80 font-bold py-3 px-4 rounded-xl text-xs text-center flex items-center justify-center gap-2 shadow-inner">
-                  <div className="w-1.5 h-1.5 rounded-full bg-zinc-700 animate-pulse"></div>
+                <div className="flex items-center justify-center gap-2 text-xs font-semibold text-zinc-400 py-2">
+                  <div className="w-1.5 h-1.5 rounded-full bg-zinc-500 animate-pulse"></div>
                   <span>Oczekiwanie aż obcy przejdzie dalej (1/2)</span>
                 </div>
               ) : (
-                <div className="flex flex-col gap-3 mt-1">
-                  <p className="text-[10px] text-zinc-500 text-center leading-normal italic font-medium">
+                <div className="flex flex-col gap-3">
+                  <p className="text-xs text-center text-zinc-400 mb-1">
                     Obcy zakończył turę. Przejdź do kolejnego kroku:
                   </p>
                   <button
                     onClick={() => onAction(msgId, "", "complete_turn")}
-                    className="w-full bg-white hover:bg-zinc-150 text-zinc-950 font-sans font-extrabold py-3 px-4 rounded-xl transition-all duration-200 cursor-pointer text-xs sm:text-sm text-center flex items-center justify-center gap-1.5 outline-none border border-transparent shadow-md"
+                    className="w-full bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold py-3 rounded-xl transition-colors shadow-lg shadow-indigo-500/20 active:scale-[0.98]"
                   >
                     <span>Następna tura</span>
                   </button>

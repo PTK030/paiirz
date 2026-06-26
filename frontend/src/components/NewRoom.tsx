@@ -2,30 +2,30 @@ import React from "react";
 import { AiFillMessage } from "react-icons/ai";
 
 interface NewRoomProps {
-  switchRoom: boolean;
-  joinRoom: () => void;
   leaveRoom: () => void;
-  setSwitchRoom: (switchRoom: boolean) => void;
+  joinRoom: () => void;
 }
 
-const NewRoom: React.FC<NewRoomProps> = ({ joinRoom, leaveRoom, setSwitchRoom, switchRoom }) => {
-
-  const handleSwitch = () => {
-    if (switchRoom) {
-      joinRoom();
-      console.log("join");
-      setSwitchRoom(!switchRoom);
-    } else {
-      leaveRoom();
-      console.log("leave");
-      setSwitchRoom(!switchRoom);
-    }
-  };
-
+const NewRoom: React.FC<NewRoomProps> = ({ leaveRoom, joinRoom }) => {
   return (
-    <button className="bg-zinc-900/45 hover:bg-zinc-900/80 text-zinc-400 hover:text-zinc-200 px-4 sm:px-8 text-xl rounded-none transition-all duration-200 border-r border-zinc-800/80 select-none outline-none" onClick={handleSwitch}>
-      <AiFillMessage />
-    </button>
+    <div className="flex gap-2">
+      <button
+        className="p-2.5 sm:p-4 rounded-xl sm:rounded-[1.5rem] flex items-center justify-center transition-all duration-300 outline-none shadow-lg cursor-pointer flex-shrink-0 bg-zinc-900/80 border border-zinc-800/80 text-red-400 hover:bg-red-500/10 hover:border-red-500/30 hover:text-red-300 hover:scale-105"
+        onClick={leaveRoom}
+        title="Rozłącz się"
+      >
+        <AiFillMessage size={20} />
+      </button>
+      <button
+        className="p-2.5 sm:p-4 rounded-xl sm:rounded-[1.5rem] flex items-center justify-center transition-all duration-300 outline-none shadow-lg cursor-pointer flex-shrink-0 bg-indigo-500/20 border border-indigo-500/30 text-indigo-400 hover:bg-indigo-500/30 shadow-[0_0_15px_rgba(99,102,241,0.2)] hover:scale-105"
+        onClick={joinRoom}
+        title="Pomiń i znajdź nowego"
+      >
+        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+        </svg>
+      </button>
+    </div>
   );
 };
 

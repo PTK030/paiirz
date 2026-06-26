@@ -46,4 +46,18 @@
   }
 }
 
+@keyframes subtle-ripple {
+  0% {
+    transform: scale(0.95);
+    opacity: 0.35;
+  }
+  100% {
+    transform: scale(2.2);
+    opacity: 0;
+  }
+}
 
+.animate-subtle-ripple {
+  animation: subtle-ripple 2.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) infinite;
+  will-change: transform, opacity;
+}
