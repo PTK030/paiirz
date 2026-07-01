@@ -1,11 +1,15 @@
 import { useEffect, useRef, useState, useCallback } from "react";
-import { Socket } from "socket.io-client";
+import type { Socket } from "socket.io-client";
+
+import { webRtcSignalSchema } from "../types/socket.schema";
+import { withValidation } from "../utils/socketValidation";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
 export type CallState = "idle" | "calling" | "incoming" | "connected";
-export type CallType  = "voice" | "video";
+export type CallType = "voice" | "video";
 
+/** Return type of {@link useWebRTC} - call state, media streams, and call actions. */
 export interface UseWebRTCReturn {
   callState: CallState;
   callType: CallType | null;
@@ -41,10 +45,18 @@ const VIDEO_CONSTRAINTS: MediaTrackConstraints = {
 
 // ─── Hook ────────────────────────────────────────────────────────────────────
 
-export function useWebRTC(
-  socket: Socket | null,
-  room: string | null
-): UseWebRTCReturn {
+/**
+ * @description Manages a single peer-to-peer voice/video call over an
+ * existing chat room, using the socket connection purely as a signaling
+ * channel (offer/answer/ICE candidates relayed via `webrtc_signal`). Owns the
+ * `RTCPeerConnection` lifecycle, local/remote `MediaStream`s, and mic/camera
+ * toggle state; renders nothing itself, but exposes refs for the caller's
+ * `<video>` elements.
+ * @param socket - Active socket.io connection, or `null` before it connects.
+ * @param room - Current room id the call signals are scoped to, or `null`.
+ * @returns Call state/media streams and the actions to start/accept/decline/end a call.
+ */
+export function useWebRTC(socket: Socket | null, room: string | null): UseWebRTCReturn {
   const [callState, setCallState] = useState<CallState>("idle");
   const [callType, setCallType] = useState<CallType | null>(null);
   const [incomingCallType, setIncomingCallType] = useState<CallType | null>(null);
@@ -84,6 +96,7 @@ export function useWebRTC(
     }
   };
 
+  /** @description Stops local media tracks, closes the peer connection, and resets all call state to idle. */
   const endCall = useCallback(() => {
     stopStream(localStreamRef.current);
     localStreamRef.current = null;
@@ -152,9 +165,7 @@ export function useWebRTC(
     }
 
     const constraints: MediaStreamConstraints =
-      type === "voice"
-        ? { audio: true, video: false }
-        : { audio: true, video: VIDEO_CONSTRAINTS };
+      type === "voice" ? { audio: true, video: false } : { audio: true, video: VIDEO_CONSTRAINTS };
     return navigator.mediaDevices.getUserMedia(constraints);
   };
 
@@ -164,6 +175,7 @@ export function useWebRTC(
 
   // ── Public actions ──────────────────────────────────────────────────────────
 
+  /** @description Requests the local media device, then signals a call request to the peer. */
   const startCall = useCallback(
     async (type: CallType) => {
       if (!socket || !room) return;
@@ -185,6 +197,7 @@ export function useWebRTC(
     [socket, room, sendSignal]
   );
 
+  /** @description Accepts an incoming call: grabs local media, creates the peer connection, and signals acceptance. */
   const acceptCall = useCallback(async () => {
     if (!incomingCallType) return;
     const type = incomingCallType;
@@ -209,14 +222,16 @@ export function useWebRTC(
       alert(`Brak dostępu do urządzeń multimedialnych. Szczegóły: ${detail}`);
       declineCall();
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [incomingCallType, createPeerConnection, sendSignal]);
 
+  /** @description Signals a decline to the peer and tears down any local call state. */
   const declineCall = useCallback(() => {
     sendSignal({ type: "call-decline" });
     endCall();
   }, [sendSignal, endCall]);
 
+  /** @description Mutes/unmutes the local microphone track in place (no renegotiation needed). */
   const toggleMic = useCallback(() => {
     const audioTrack = localStreamRef.current?.getAudioTracks()[0];
     if (audioTrack) {
@@ -225,6 +240,12 @@ export function useWebRTC(
     }
   }, []);
 
+  /**
+   * @description Toggles the local camera on/off. Turning off simply stops
+   * and removes the video track; turning back on re-acquires a fresh video
+   * track and renegotiates the peer connection with a new offer, since
+   * WebRTC senders can't resume a stopped track in place.
+   */
   const toggleCamera = useCallback(async () => {
     const pc = pcRef.current;
     const currentStream = localStreamRef.current;
@@ -257,7 +278,7 @@ export function useWebRTC(
         if (localVideoRef.current && currentStream) {
           localVideoRef.current.srcObject = currentStream;
         }
-        setLocalStream(() => currentStream ? new MediaStream(currentStream.getTracks()) : null);
+        setLocalStream(() => (currentStream ? new MediaStream(currentStream.getTracks()) : null));
       } catch {
         alert("Nie mozna uruchomić kamery. Sprawdz uprawnienia przegladarki.");
       }
@@ -343,8 +364,11 @@ export function useWebRTC(
       }
     };
 
-    socket.on("webrtc_signal", handleSignal);
-    return () => { socket.off("webrtc_signal", handleSignal); };
+    const validatedHandler = withValidation(webRtcSignalSchema, handleSignal);
+    socket.on("webrtc_signal", validatedHandler);
+    return () => {
+      socket.off("webrtc_signal", validatedHandler);
+    };
   }, [socket, createPeerConnection, sendSignal, endCall]);
 
   // ── Sync local stream to video element ──────────────────────────────────────

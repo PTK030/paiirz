@@ -5,14 +5,7 @@
  * Falls back silently when AudioContext is unavailable (e.g. test environments).
  */
 
-export type SoundType =
-  | "send"
-  | "receive"
-  | "match"
-  | "leave"
-  | "invite"
-  | "game_start"
-  | "block";
+export type SoundType = "send" | "receive" | "match" | "leave" | "invite" | "game_start" | "block";
 
 type AudioContextCtor = typeof AudioContext;
 
@@ -21,19 +14,21 @@ function getAudioContextClass(): AudioContextCtor | undefined {
   if (typeof window === "undefined") return undefined;
   return (
     window.AudioContext ??
-    (window as Window & { webkitAudioContext?: AudioContextCtor })
-      .webkitAudioContext
+    (window as Window & { webkitAudioContext?: AudioContextCtor }).webkitAudioContext
   );
 }
 
 /**
- * Play a synthesised notification sound.
- * No-ops when `soundsEnabled` is false or Web Audio API is unavailable.
+ * @description Plays a synthesised notification sound for the given event
+ * type using raw oscillators/gain nodes (no audio assets needed). No-ops
+ * when `soundsEnabled` is false or the Web Audio API is unavailable. The
+ * per-case frequencies/durations are sound-design constants intentionally
+ * kept inline (each used exactly once, self-documented via the musical note
+ * comments below).
+ * @param type - which UI event this sound represents
+ * @param soundsEnabled - whether the user has sounds turned on
  */
-export function playNotificationSound(
-  type: SoundType,
-  soundsEnabled: boolean
-): void {
+export function playNotificationSound(type: SoundType, soundsEnabled: boolean): void {
   if (!soundsEnabled) return;
 
   const AudioContextClass = getAudioContextClass();

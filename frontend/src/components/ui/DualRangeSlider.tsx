@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+import type React from "react";
+import { useState, useEffect } from "react";
 
 interface DualRangeSliderProps {
   min: number;
@@ -7,12 +8,12 @@ interface DualRangeSliderProps {
   onChange: (value: [number, number]) => void;
 }
 
-export const DualRangeSlider: React.FC<DualRangeSliderProps> = ({
-  min,
-  max,
-  value,
-  onChange,
-}) => {
+/**
+ * @description Two-thumb range slider (min/max) built from two overlapping
+ * native `<input type="range">` elements, used for the age-range filter.
+ * Each thumb is clamped so it can never cross the other (min stays below max).
+ */
+export const DualRangeSlider: React.FC<DualRangeSliderProps> = ({ min, max, value, onChange }) => {
   const [minVal, setMinVal] = useState(value[0] || min);
   const [maxVal, setMaxVal] = useState(value[1] || max);
 
@@ -34,8 +35,7 @@ export const DualRangeSlider: React.FC<DualRangeSliderProps> = ({
     onChange([minVal, newVal]);
   };
 
-  const getPercent = (val: number) =>
-    Math.round(((val - min) / (max - min)) * 100);
+  const getPercent = (val: number) => Math.round(((val - min) / (max - min)) * 100);
 
   const minPercent = getPercent(minVal);
   const maxPercent = getPercent(maxVal);

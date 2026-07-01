@@ -53,9 +53,7 @@ def check(sid: str, timestamps: dict, blocked: dict) -> RateLimitResult:
 
     if len(window) > _MAX_MESSAGES:
         blocked[sid] = now + _BLOCK_DURATION
-        logger.debug(
-            "Rate limit exceeded for %s - blocking for %ds", sid, int(_BLOCK_DURATION)
-        )
+        logger.debug("Rate limit exceeded for %s - blocking for %ds", sid, int(_BLOCK_DURATION))
         return RateLimitResult(allowed=False, blocked_for=int(_BLOCK_DURATION))
 
     return RateLimitResult(allowed=True)

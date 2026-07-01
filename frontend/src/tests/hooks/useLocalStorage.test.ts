@@ -1,5 +1,6 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
 import { renderHook, act } from "@testing-library/react";
+import { describe, it, expect, beforeEach, vi } from "vitest";
+
 import { useLocalStorage } from "../../hooks/useLocalStorage";
 
 describe("useLocalStorage", () => {
@@ -28,9 +29,7 @@ describe("useLocalStorage", () => {
   });
 
   it("supports object values", () => {
-    const { result } = renderHook(() =>
-      useLocalStorage<{ x: number }>("obj-key", { x: 0 })
-    );
+    const { result } = renderHook(() => useLocalStorage<{ x: number }>("obj-key", { x: 0 }));
     act(() => {
       result.current[1]({ x: 42 });
     });
@@ -61,9 +60,7 @@ describe("useLocalStorage", () => {
   });
 
   it("stores null correctly", () => {
-    const { result } = renderHook(() =>
-      useLocalStorage<string | null>("null-key", null)
-    );
+    const { result } = renderHook(() => useLocalStorage<string | null>("null-key", null));
     expect(result.current[0]).toBeNull();
   });
 

@@ -21,25 +21,34 @@ function getAudioContextClass(): AudioContextCtor | undefined {
   if (typeof window === "undefined") return undefined;
   return (
     window.AudioContext ??
-    (window as Window & { webkitAudioContext?: AudioContextCtor })
-      .webkitAudioContext
+    (window as Window & { webkitAudioContext?: AudioContextCtor }).webkitAudioContext
   );
 }
 
 const WAVE_BARS = 40;
+/** How often `recordingTime` is incremented (ms). */
+const RECORDING_TIMER_INTERVAL_MS = 1000;
+/** How often the waveform buffer shifts in a new sample (ms). */
+const WAVE_SAMPLE_INTERVAL_MS = 75;
+/** FFT size used for volume analysis via the Web Audio API. */
+const ANALYSER_FFT_SIZE = 256;
+/** Average sample deviation below which audio is treated as silence (0%). */
+const VOLUME_SILENCE_THRESHOLD = 1.2;
+/** Average sample deviation treated as full conversational volume (100%). */
+const VOLUME_SPEECH_MAX = 12.0;
 
 /**
- * Manages audio recording via MediaRecorder.
- * Exposes waveform amplitude data for visualisation.
- * When `stopRecording(true)` is called, the blob is converted to a base64
- * data URI and made available via `recordedAudio`.
+ * @description Manages audio recording via `MediaRecorder`, exposing live
+ * waveform amplitude data (via the Web Audio API `AnalyserNode`) for
+ * visualisation while recording. When `stopRecording(true)` is called, the
+ * recorded blob is converted to a base64 data URI and made available via
+ * `recordedAudio`.
+ * @returns Recording state/waveform data and the actions to start/stop a recording.
  */
 export function useRecording(): UseRecordingReturn {
   const [recordingMode, setRecordingMode] = useState<RecordingMode>("none");
   const [recordingTime, setRecordingTime] = useState(0);
-  const [recordingWave, setRecordingWave] = useState<number[]>(
-    Array(WAVE_BARS).fill(0)
-  );
+  const [recordingWave, setRecordingWave] = useState<number[]>(Array(WAVE_BARS).fill(0));
   const [recordedAudio, setRecordedAudio] = useState<string | null>(null);
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -59,6 +68,7 @@ export function useRecording(): UseRecordingReturn {
     }
   };
 
+  /** @description Requests mic access and starts recording, updating the timer/waveform while active. */
   const startRecording = useCallback(async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -83,34 +93,31 @@ export function useRecording(): UseRecordingReturn {
 
       timerRef.current = window.setInterval(() => {
         setRecordingTime((prev) => prev + 1);
-      }, 1000);
+      }, RECORDING_TIMER_INTERVAL_MS);
 
       waveIntervalRef.current = window.setInterval(() => {
         const curVol = volumeRef.current;
         setRecordingWave((prev) => [...prev.slice(1), curVol]);
-      }, 75);
+      }, WAVE_SAMPLE_INTERVAL_MS);
 
       // Volume analysis via Web Audio API
       const AudioContextClass = getAudioContextClass();
       if (AudioContextClass) {
         const audioCtx = new AudioContextClass();
         if (audioCtx.state === "suspended") {
-          audioCtx.resume().catch(() => { });
+          audioCtx.resume().catch(() => {});
         }
         const source = audioCtx.createMediaStreamSource(stream);
         const analyser = audioCtx.createAnalyser();
-        analyser.fftSize = 256;
+        analyser.fftSize = ANALYSER_FFT_SIZE;
         source.connect(analyser);
 
         const bufferLength = analyser.frequencyBinCount;
         const dataArray = new Uint8Array(bufferLength);
 
         const checkVolume = () => {
-          if (
-            !mediaRecorderRef.current ||
-            mediaRecorderRef.current.state === "inactive"
-          ) {
-            audioCtx.close().catch(() => { });
+          if (!mediaRecorderRef.current || mediaRecorderRef.current.state === "inactive") {
+            audioCtx.close().catch(() => {});
             return;
           }
 
@@ -121,14 +128,9 @@ export function useRecording(): UseRecordingReturn {
           }
           const averageDeviation = sumDeviation / bufferLength;
 
-          // Non-linear scaling: silent/ambient < 1.2 → 0%, conversational 12 → 100%
-          const threshold = 1.2;
-          const maxSpeech = 12.0;
-          const adjusted = Math.max(0, averageDeviation - threshold);
-          const volPercentage = Math.min(
-            Math.round((adjusted / maxSpeech) * 100),
-            100
-          );
+          // Non-linear scaling: silent/ambient < threshold → 0%, conversational max → 100%
+          const adjusted = Math.max(0, averageDeviation - VOLUME_SILENCE_THRESHOLD);
+          const volPercentage = Math.min(Math.round((adjusted / VOLUME_SPEECH_MAX) * 100), 100);
 
           volumeRef.current = volPercentage;
           requestAnimationFrame(checkVolume);
@@ -143,6 +145,11 @@ export function useRecording(): UseRecordingReturn {
     }
   }, []);
 
+  /**
+   * @description Stops the active recording. If `shouldSend` is true, the
+   * recorded audio is converted to a base64 data URI and exposed via
+   * `recordedAudio`; otherwise it is discarded.
+   */
   const stopRecording = useCallback((shouldSend: boolean) => {
     clearTimers();
 

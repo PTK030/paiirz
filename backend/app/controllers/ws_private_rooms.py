@@ -9,7 +9,6 @@ import logging
 from flask import request
 from flask_socketio import SocketIO, emit, join_room
 
-from ..services.room_service import remove_room
 from ..data.state import rooms
 
 logger = logging.getLogger(__name__)
@@ -26,6 +25,7 @@ def register(sio: SocketIO) -> None:
 
 
 def _on_create_private_room(data: dict) -> None:
+    """Create a new invite-only room keyed by a client-supplied code."""
     sid = request.sid
     room_code = data.get("roomCode", "")
 
@@ -57,6 +57,7 @@ def _on_create_private_room(data: dict) -> None:
 
 
 def _on_join_private_room(data: dict) -> None:
+    """Join an existing private room by its code, if it has capacity."""
     sid = request.sid
     room_code = data.get("roomCode", "")
 
@@ -68,9 +69,7 @@ def _on_join_private_room(data: dict) -> None:
     room_data = rooms.get(room_id)
 
     if not room_data:
-        emit(
-            "private_room_error", {"message": "Pokój nie istnieje lub wygasł."}, to=sid
-        )
+        emit("private_room_error", {"message": "Pokój nie istnieje lub wygasł."}, to=sid)
         return
     if len(room_data["users"]) >= _MAX_USERS_PER_ROOM:
         emit("private_room_error", {"message": "Pokój jest pełny."}, to=sid)
@@ -87,6 +86,7 @@ def _on_join_private_room(data: dict) -> None:
 
 
 def _on_tab_visibility_change(data: dict) -> None:
+    """Notify the partner when the room owner enabled tab-leave alerts."""
     room_id = data.get("room")
     if not room_id or room_id not in rooms:
         return

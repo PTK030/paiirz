@@ -1,14 +1,11 @@
 /** @type {import('tailwindcss').Config} */
 export default {
-  content: [
-    "./index.html",
-    "./src/**/*.{js,ts,jsx,tsx}",
-  ],
+  content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
   theme: {
     extend: {
       colors: {
-        "deep-navy-blue": '#021526',
-        "mid-night-blue": '#03346E'
+        "deep-navy-blue": "#021526",
+        "mid-night-blue": "#03346E",
       },
       fontFamily: {
         sans: [
@@ -19,18 +16,11 @@ export default {
           "'SF Pro Text'",
           "'Inter'",
           "system-ui",
-          "sans-serif"
+          "sans-serif",
         ],
-        mono: [
-          "'JetBrains Mono'",
-          "'SF Mono'",
-          "SFMono-Regular",
-          "ui-monospace",
-          "monospace"
-        ]
-      }
+        mono: ["'JetBrains Mono'", "'SF Mono'", "SFMono-Regular", "ui-monospace", "monospace"],
+      },
     },
   },
   plugins: [],
-}
-
+};

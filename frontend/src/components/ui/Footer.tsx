@@ -1,11 +1,13 @@
 import { Link, useLocation } from "react-router-dom";
-import { BRAND_NAME } from "../utils/brand";
+
+import { BRAND_NAME } from "../../utils/brand";
 
 interface FooterProps {
   note?: string;
   maxWidthClass?: string;
 }
 
+/** @description Page footer: privacy note plus links to the legal/contact pages, highlighting the active route. */
 const Footer = ({ note, maxWidthClass = "max-w-3xl" }: FooterProps) => {
   const location = useLocation();
 
@@ -23,9 +25,7 @@ const Footer = ({ note, maxWidthClass = "max-w-3xl" }: FooterProps) => {
         <Link
           to="/bezpieczenstwo"
           className={`transition-colors cursor-pointer outline-none ${
-            isActive("/bezpieczenstwo")
-              ? "text-zinc-200 font-medium"
-              : "hover:text-zinc-400"
+            isActive("/bezpieczenstwo") ? "text-zinc-200 font-medium" : "hover:text-zinc-400"
           }`}
         >
           Bezpieczeństwo
@@ -33,9 +33,7 @@ const Footer = ({ note, maxWidthClass = "max-w-3xl" }: FooterProps) => {
         <Link
           to="/regulamin"
           className={`transition-colors cursor-pointer outline-none ${
-            isActive("/regulamin")
-              ? "text-zinc-200 font-medium"
-              : "hover:text-zinc-400"
+            isActive("/regulamin") ? "text-zinc-200 font-medium" : "hover:text-zinc-400"
           }`}
         >
           Regulamin
@@ -43,9 +41,7 @@ const Footer = ({ note, maxWidthClass = "max-w-3xl" }: FooterProps) => {
         <Link
           to="/kontakt"
           className={`transition-colors cursor-pointer outline-none ${
-            isActive("/kontakt")
-              ? "text-zinc-200 font-medium"
-              : "hover:text-zinc-400"
+            isActive("/kontakt") ? "text-zinc-200 font-medium" : "hover:text-zinc-400"
           }`}
         >
           Kontakt

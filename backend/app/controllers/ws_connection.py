@@ -39,6 +39,7 @@ def register(sio: SocketIO) -> None:
 
 
 def _on_connect() -> None:
+    """Register a newly connected client and broadcast the updated user count."""
     sid = request.sid
     connected_users.add(sid)
     logger.info("Connected: %s (total=%d)", sid, len(connected_users))
@@ -46,6 +47,7 @@ def _on_connect() -> None:
 
 
 def _on_join(data: dict | None = None) -> None:
+    """Match the client into a compatible waiting room, or open a new one."""
     sid = request.sid
     raw_ip = request.remote_addr
     salt = current_app.config["IP_SALT"]
@@ -53,9 +55,7 @@ def _on_join(data: dict | None = None) -> None:
     profile = _build_profile(data or {}, raw_ip, salt)
     user_profiles[sid] = profile
 
-    room_id = matchmaking.find_compatible_room(
-        sid, rooms, user_profiles, persistent_blocks
-    )
+    room_id = matchmaking.find_compatible_room(sid, rooms, user_profiles, persistent_blocks)
 
     if room_id:
         rooms[room_id]["users"].append(sid)
@@ -72,6 +72,7 @@ def _on_join(data: dict | None = None) -> None:
 
 
 def _on_leave(data: dict) -> None:
+    """Remove the client's room and notify the remaining participant, if any."""
     room_id = data.get("room")
     if room_id and room_id in rooms:
         leave_room(room_id)
@@ -80,6 +81,7 @@ def _on_leave(data: dict) -> None:
 
 
 def _on_disconnect() -> None:
+    """Clean up all state for a disconnected client and broadcast the new count."""
     sid = request.sid
     connected_users.discard(sid)
     user_profiles.pop(sid, None)

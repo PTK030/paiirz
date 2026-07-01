@@ -1,5 +1,6 @@
 import { useState, useCallback } from "react";
 import type { Socket } from "socket.io-client";
+
 import type { EncryptedPayload } from "../utils/crypto";
 import { encrypt, decrypt } from "../utils/crypto";
 
@@ -14,23 +15,18 @@ export interface UseContactExchangeReturn {
   partnerWantsToExchange: boolean;
   setPartnerWantsToExchange: (v: boolean) => void;
   /** Send our contact to the partner (E2EE if sharedKey is available). */
-  submitContactShare: (
-    socket: Socket,
-    room: string,
-    sharedKey: CryptoKey | null
-  ) => Promise<void>;
+  submitContactShare: (socket: Socket, room: string, sharedKey: CryptoKey | null) => Promise<void>;
   /** Handle an incoming contact_exchanged event. */
-  handleContactReceived: (
-    encryptedContact: string,
-    sharedKey: CryptoKey | null
-  ) => Promise<void>;
+  handleContactReceived: (encryptedContact: string, sharedKey: CryptoKey | null) => Promise<void>;
   /** Reset to idle state (call when leaving a room). */
   resetExchangeState: () => void;
 }
 
 /**
- * Manages the contact exchange state machine.
- * Contacts are transmitted as E2EE ciphertext when a shared key is available.
+ * @description Manages the contact-exchange state machine (idle → input →
+ * waiting → exchanged). Contacts are transmitted as E2EE ciphertext when a
+ * shared key is available, falling back to plaintext otherwise.
+ * @returns Exchange state and the actions to submit/receive/reset a contact share.
  */
 export function useContactExchange(): UseContactExchangeReturn {
   const [exchangeState, setExchangeState] = useState<ExchangeState>("idle");

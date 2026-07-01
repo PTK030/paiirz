@@ -12,7 +12,7 @@ Args format note:
     Use _get_data(event) to handle both cases uniformly.
 """
 
-import app.state as state
+import app.data.state as state
 import pytest
 from app.extensions import socketio
 
@@ -404,7 +404,7 @@ class TestBlockUser:
 
     def test_register_block_with_missing_profiles_is_safe(self):
         """Covers the missing-profile guard in _register_block."""
-        from app.events.chat import _register_block
+        from app.controllers.ws_chat import _register_block
 
         _register_block("unknown_sid", "also_unknown")
         assert len(state.persistent_blocks) == 0
@@ -424,7 +424,7 @@ class TestBlockUser:
         state.user_profiles[sid1]["ip"] = "aaaaaa_hashed_ip_of_user_1"
         state.user_profiles[sid2]["ip"] = "bbbbbb_hashed_ip_of_user_2"
 
-        from app.events.chat import _register_block
+        from app.controllers.ws_chat import _register_block
 
         _register_block(sid1, sid2)
 

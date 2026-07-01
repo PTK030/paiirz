@@ -1,6 +1,6 @@
 """Unit tests for cryptographic hashing utilities."""
 
-from app.security import hash_identifier
+from app.utils.security import hash_identifier
 
 
 class TestHashIdentifier:

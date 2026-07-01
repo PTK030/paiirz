@@ -14,5 +14,5 @@ def register_ws_controllers(sio: SocketIO) -> None:
     ws_private_rooms.register(sio)
     ws_webrtc.register(sio)
 
-__all__ = ["api", "register_ws_controllers"]
 
+__all__ = ["api", "register_ws_controllers"]

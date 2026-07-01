@@ -1,5 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import type { Socket } from "socket.io-client";
+
+import { e2eKeyExchangeSchema } from "../types/socket.schema";
 import {
   generateKeyPair,
   exportPublicKey,
@@ -11,6 +13,7 @@ import {
   decryptBinary,
   type EncryptedPayload,
 } from "../utils/crypto";
+import { withValidation } from "../utils/socketValidation";
 
 export interface UseE2EEReturn {
   /** True once both peers have derived the same shared key. */
@@ -34,12 +37,14 @@ export interface UseE2EEReturn {
 }
 
 /**
- * Manages ECDH P-256 key exchange over the given socket.
- * Both peers independently derive the same AES-GCM-256 shared key.
- *
+ * @description Manages ECDH P-256 key exchange over the given socket. Both
+ * peers independently generate a keypair, exchange public keys via the
+ * `e2e_key_exchange` event, and derive the same AES-GCM-256 shared key -
+ * the shared secret itself is never transmitted.
  * @param socket  - active socket.io client (or null while connecting)
  * @param room    - current room ID (or null when not in a room)
  * @param onReady - optional callback fired with the status message when key exchange completes
+ * @returns E2EE readiness/key state and the encrypt/decrypt helpers.
  */
 export function useE2EE(
   socket: Socket | null,
@@ -91,12 +96,7 @@ export function useE2EE(
   useEffect(() => {
     if (!socket) return;
 
-    const handleKeyExchange = async ({
-      publicKey,
-    }: {
-      sender_sid: string;
-      publicKey: string;
-    }) => {
+    const handleKeyExchange = async ({ publicKey }: { sender_sid: string; publicKey: string }) => {
       try {
         let myKeyPair = keyPairRef.current;
 
@@ -122,49 +122,38 @@ export function useE2EE(
       }
     };
 
-    socket.on("e2e_key_exchange", handleKeyExchange);
+    const validatedHandler = withValidation(e2eKeyExchangeSchema, handleKeyExchange);
+    socket.on("e2e_key_exchange", validatedHandler);
     return () => {
-      socket.off("e2e_key_exchange", handleKeyExchange);
+      socket.off("e2e_key_exchange", validatedHandler);
     };
   }, [socket, onReady]);
 
   // ── Encrypt / decrypt helpers ─────────────────────────────────────────────
 
-  const encryptText = useCallback(
-    async (plaintext: string): Promise<EncryptedPayload | null> => {
-      const key = sharedKeyRef.current;
-      if (!key) return null;
-      return encrypt(key, plaintext);
-    },
-    []
-  );
+  const encryptText = useCallback(async (plaintext: string): Promise<EncryptedPayload | null> => {
+    const key = sharedKeyRef.current;
+    if (!key) return null;
+    return encrypt(key, plaintext);
+  }, []);
 
-  const encryptBin = useCallback(
-    async (b64: string): Promise<EncryptedPayload | null> => {
-      const key = sharedKeyRef.current;
-      if (!key) return null;
-      return encryptBinary(key, b64);
-    },
-    []
-  );
+  const encryptBin = useCallback(async (b64: string): Promise<EncryptedPayload | null> => {
+    const key = sharedKeyRef.current;
+    if (!key) return null;
+    return encryptBinary(key, b64);
+  }, []);
 
-  const decryptText = useCallback(
-    async (payload: EncryptedPayload): Promise<string> => {
-      const key = sharedKeyRef.current;
-      if (!key) return "[Brak klucza E2EE]";
-      return decrypt(key, payload);
-    },
-    []
-  );
+  const decryptText = useCallback(async (payload: EncryptedPayload): Promise<string> => {
+    const key = sharedKeyRef.current;
+    if (!key) return "[Brak klucza E2EE]";
+    return decrypt(key, payload);
+  }, []);
 
-  const decryptBin = useCallback(
-    async (payload: EncryptedPayload): Promise<string> => {
-      const key = sharedKeyRef.current;
-      if (!key) return "";
-      return decryptBinary(key, payload);
-    },
-    []
-  );
+  const decryptBin = useCallback(async (payload: EncryptedPayload): Promise<string> => {
+    const key = sharedKeyRef.current;
+    if (!key) return "";
+    return decryptBinary(key, payload);
+  }, []);
 
   return {
     e2eReady,

@@ -1,11 +1,23 @@
 import { motion, AnimatePresence } from "framer-motion";
-import React, { useState } from "react";
-import { Layout } from "../components/ui/Layout";
-import { AnimatedPage } from "../components/ui/AnimatedPage";
-import { Card } from "../components/ui/Card";
-import { TextInput } from "../components/ui/TextInput";
-import { Button } from "../components/ui/Button";
+import type React from "react";
+import { useState } from "react";
 
+import { AnimatedPage } from "../components/ui/AnimatedPage";
+import { Button } from "../components/ui/Button";
+import { Card } from "../components/ui/Card";
+import { Layout } from "../components/ui/Layout";
+import { TextInput } from "../components/ui/TextInput";
+
+/** How long the "message sent" confirmation stays visible before the form reappears (ms). */
+const SUCCESS_MESSAGE_DURATION_MS = 5000;
+
+/**
+ * @description Contact page with a simple email + message form.
+ *
+ * Note: there is no backend endpoint wired up yet - `handleSubmit` only
+ * simulates a successful send locally. Wiring this to a real contact/support
+ * channel is a product decision outside the scope of this refactor.
+ */
 const Contact = () => {
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
@@ -14,7 +26,7 @@ const Contact = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !message) return;
-    
+
     // Simulate API request
     setIsSubmitted(true);
     setEmail("");
@@ -22,7 +34,7 @@ const Contact = () => {
 
     setTimeout(() => {
       setIsSubmitted(false);
-    }, 5000);
+    }, SUCCESS_MESSAGE_DURATION_MS);
   };
 
   return (
@@ -35,7 +47,8 @@ const Contact = () => {
               Skontaktuj się
             </h1>
             <p className="text-sm text-zinc-400 leading-relaxed">
-              Masz pytania dotyczące bezpieczeństwa, uwagi, propozycje współpracy lub zauważyłeś błąd techniczny? Napisz do nas bezpośrednio.
+              Masz pytania dotyczące bezpieczeństwa, uwagi, propozycje współpracy lub zauważyłeś
+              błąd techniczny? Napisz do nas bezpośrednio.
             </p>
           </div>
 
@@ -53,13 +66,22 @@ const Contact = () => {
                 <Card>
                   <div className="flex flex-col items-center gap-3 text-center py-4">
                     <div className="p-3 bg-indigo-900/20 border border-indigo-800/30 rounded-full text-indigo-400 shadow-inner">
-                      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                      <svg
+                        className="w-6 h-6"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth={2.5}
+                      >
                         <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                       </svg>
                     </div>
-                    <h3 className="text-sm font-semibold text-indigo-300">Wiadomość została wysłana!</h3>
+                    <h3 className="text-sm font-semibold text-indigo-300">
+                      Wiadomość została wysłana!
+                    </h3>
                     <p className="text-xs text-zinc-400 leading-relaxed max-w-xs">
-                      Dziękujemy za kontakt. Postaramy się odpowiedzieć na Twój e-mail w przeciągu 24 godzin.
+                      Dziękujemy za kontakt. Postaramy się odpowiedzieć na Twój e-mail w przeciągu
+                      24 godzin.
                     </p>
                   </div>
                 </Card>

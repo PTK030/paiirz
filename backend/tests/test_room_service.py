@@ -1,6 +1,6 @@
 """Unit tests for room lifecycle management."""
 
-import app.state as state
+import app.data.state as state
 import pytest
 from app.services.room_service import (
     create_room,

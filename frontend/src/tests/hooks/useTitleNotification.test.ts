@@ -1,5 +1,6 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { renderHook, act } from "@testing-library/react";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+
 import { useTitleNotification } from "../../hooks/useTitleNotification";
 import { APP_TITLE } from "../../utils/brand";
 

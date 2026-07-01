@@ -1,4 +1,4 @@
-import React from "react";
+import type React from "react";
 import { AiFillMessage } from "react-icons/ai";
 
 interface NewRoomProps {
@@ -6,6 +6,7 @@ interface NewRoomProps {
   joinRoom: () => void;
 }
 
+/** @description Compact "leave conversation" / "skip to a new stranger" button pair shown in the message bar. */
 const NewRoom: React.FC<NewRoomProps> = ({ leaveRoom, joinRoom }) => {
   return (
     <div className="flex gap-2">
@@ -21,7 +22,13 @@ const NewRoom: React.FC<NewRoomProps> = ({ leaveRoom, joinRoom }) => {
         onClick={joinRoom}
         title="Pomiń i znajdź nowego"
       >
-        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+        <svg
+          className="w-5 h-5"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={2.5}
+        >
           <path strokeLinecap="round" strokeLinejoin="round" d="M13 5l7 7-7 7M5 5l7 7-7 7" />
         </svg>
       </button>

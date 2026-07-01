@@ -1,35 +1,45 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
-import { 
-  BsPlayFill, 
-  BsPauseFill, 
-  BsVolumeUpFill, 
-  BsVolumeMuteFill, 
-  BsFullscreen, 
-  BsFullscreenExit 
+import type React from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
+import {
+  BsPlayFill,
+  BsPauseFill,
+  BsVolumeUpFill,
+  BsVolumeMuteFill,
+  BsFullscreen,
+  BsFullscreenExit,
 } from "react-icons/bs";
 
 interface CustomVideoPlayerProps {
   src: string;
+  /** `"inline"` renders a muted autoplay-off thumbnail with a play overlay (chat bubble); `"lightbox"` renders full playback controls. */
   mode: "inline" | "lightbox";
+  /** Called when the inline thumbnail is clicked (used to open the lightbox). */
   onPlayClick?: () => void;
+  /** Called when playback reaches the end. */
   onEnded?: () => void;
 }
 
-export const CustomVideoPlayer: React.FC<CustomVideoPlayerProps> = ({ 
-  src, 
-  mode, 
+/**
+ * @description Custom-controlled video player used for both the inline chat
+ * bubble thumbnail and the full-screen lightbox playback. Owns play/pause,
+ * volume, seek, and fullscreen state directly against the underlying
+ * `<video>` element rather than relying on native browser controls.
+ */
+export const CustomVideoPlayer: React.FC<CustomVideoPlayerProps> = ({
+  src,
+  mode,
   onPlayClick,
-  onEnded 
+  onEnded,
 }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  
+
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [isMuted, setIsMuted] = useState(false);
   const [volume, setVolume] = useState(1);
-  const [, setShowControls] = useState(true);
+  const [showControls, setShowControls] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
   const controlsTimeoutRef = useRef<number | null>(null);
@@ -37,7 +47,7 @@ export const CustomVideoPlayer: React.FC<CustomVideoPlayerProps> = ({
   // Play/Pause handler
   const togglePlay = (e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
-    
+
     const video = videoRef.current;
     if (!video) return;
 
@@ -45,11 +55,14 @@ export const CustomVideoPlayer: React.FC<CustomVideoPlayerProps> = ({
       video.pause();
       setIsPlaying(false);
     } else {
-      video.play().then(() => {
-        setIsPlaying(true);
-      }).catch((err) => {
-        console.error("Video play failed:", err);
-      });
+      video
+        .play()
+        .then(() => {
+          setIsPlaying(true);
+        })
+        .catch((err) => {
+          console.error("Video play failed:", err);
+        });
     }
   };
 
@@ -72,7 +85,7 @@ export const CustomVideoPlayer: React.FC<CustomVideoPlayerProps> = ({
   const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = parseFloat(e.target.value);
     setVolume(value);
-    
+
     const video = videoRef.current;
     if (video) {
       video.volume = value;
@@ -98,11 +111,14 @@ export const CustomVideoPlayer: React.FC<CustomVideoPlayerProps> = ({
     if (!container) return;
 
     if (!document.fullscreenElement) {
-      container.requestFullscreen().then(() => {
-        setIsFullscreen(true);
-      }).catch((err) => {
-        console.error("Error enabling full-screen mode:", err);
-      });
+      container
+        .requestFullscreen()
+        .then(() => {
+          setIsFullscreen(true);
+        })
+        .catch((err) => {
+          console.error("Error enabling full-screen mode:", err);
+        });
     } else {
       document.exitFullscreen().then(() => {
         setIsFullscreen(false);
@@ -158,7 +174,7 @@ export const CustomVideoPlayer: React.FC<CustomVideoPlayerProps> = ({
   // Controls auto-hide trigger (only in lightbox mode)
   const resetControlsTimeout = useCallback(() => {
     if (mode === "inline") return;
-    
+
     setShowControls(true);
     if (controlsTimeoutRef.current) {
       window.clearTimeout(controlsTimeoutRef.current);
@@ -189,21 +205,21 @@ export const CustomVideoPlayer: React.FC<CustomVideoPlayerProps> = ({
 
   if (mode === "inline") {
     return (
-      <div 
+      <div
         onClick={onPlayClick}
-        
+        className="relative max-w-full max-h-72 rounded-[1.2rem] overflow-hidden bg-zinc-950 border border-zinc-800/80 flex items-center justify-center cursor-pointer group"
       >
-        <video 
+        <video
           ref={videoRef}
           src={src}
-          
+          className="max-w-full max-h-72 object-contain group-hover:scale-[1.01] transition-transform duration-200 select-none"
           muted
           playsInline
         />
         {/* Play overlay button */}
-        <div >
-          <div >
-            <BsPlayFill  />
+        <div className="absolute inset-0 bg-black/40 group-hover:bg-black/50 transition-colors flex items-center justify-center">
+          <div className="w-12 h-12 rounded-full bg-zinc-900/90 border border-zinc-800/80 flex items-center justify-center text-white text-xl shadow-lg transform group-hover:scale-105 group-active:scale-95 transition-transform duration-150">
+            <BsPlayFill className="ml-0.5" />
           </div>
         </div>
       </div>
@@ -212,70 +228,78 @@ export const CustomVideoPlayer: React.FC<CustomVideoPlayerProps> = ({
 
   // Lightbox Mode
   return (
-    <div 
+    <div
       ref={containerRef}
       onMouseMove={resetControlsTimeout}
       onMouseLeave={() => isPlaying && setShowControls(false)}
       onClick={togglePlay}
-      
+      className={`relative flex items-center justify-center bg-zinc-950/40 overflow-hidden select-none transition-all duration-150 ${
+        isFullscreen
+          ? "w-screen h-screen"
+          : "max-w-[95vw] max-h-[80vh] rounded-2xl border border-zinc-800/80 shadow-2xl"
+      }`}
     >
       <video
         ref={videoRef}
         src={src}
         autoPlay
         playsInline
-        
+        className={`${isFullscreen ? "w-screen h-screen" : "max-w-full max-h-[72vh]"} object-contain`}
         onContextMenu={(e) => e.preventDefault()}
       />
 
       {/* Custom Controls Bar */}
-      <div 
+      <div
         onClick={(e) => e.stopPropagation()} // Stop togglePlay click
-        
+        className={`absolute bottom-0 left-0 right-0 p-4 bg-zinc-900/90 backdrop-blur-xl border-t border-zinc-800/80 flex flex-col gap-3 transition-opacity duration-150 z-20 ${
+          showControls ? "opacity-100" : "opacity-0 pointer-events-none"
+        }`}
       >
         {/* Timeline Slider */}
-        <div >
-          <span >
+        <div className="flex items-center gap-3 w-full">
+          <span className="text-[10px] font-mono font-semibold text-zinc-400 select-none">
             {formatTime(currentTime)}
           </span>
-          
+
           <input
             type="range"
             min={0}
             max={duration || 100}
             value={currentTime}
             onChange={handleSeek}
-            
-            
+            className="flex-1 h-1.5 rounded-full appearance-none cursor-pointer bg-zinc-800 accent-indigo-500 transition-all focus:outline-none"
+            style={{
+              background: `linear-gradient(to right, #6366f1 0%, #6366f1 ${duration ? (currentTime / duration) * 100 : 0}%, rgba(63, 63, 70, 0.6) ${duration ? (currentTime / duration) * 100 : 0}%, rgba(63, 63, 70, 0.6) 100%)`,
+            }}
           />
 
-          <span >
+          <span className="text-[10px] font-mono font-semibold text-zinc-400 select-none">
             {formatTime(duration)}
           </span>
         </div>
 
         {/* Buttons Controls */}
-        <div >
-          <div >
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
             {/* Play/Pause Button */}
             <button
               onClick={togglePlay}
-              
+              className="w-9 h-9 rounded-full flex items-center justify-center bg-indigo-500 text-white hover:bg-indigo-400 transition-colors outline-none cursor-pointer"
               title={isPlaying ? "Pauza" : "Odtwórz"}
             >
-              {isPlaying ? <BsPauseFill /> : <BsPlayFill />}
+              {isPlaying ? <BsPauseFill /> : <BsPlayFill className="ml-0.5" />}
             </button>
 
             {/* Volume Control */}
-            <div >
+            <div className="flex items-center gap-2">
               <button
                 onClick={toggleMute}
-                
+                className="w-8 h-8 rounded-full flex items-center justify-center text-zinc-300 hover:text-white hover:bg-zinc-800 transition-colors outline-none cursor-pointer"
                 title={isMuted ? "Wyłącz wyciszenie" : "Wycisz"}
               >
                 {isMuted || volume === 0 ? <BsVolumeMuteFill /> : <BsVolumeUpFill />}
               </button>
-              
+
               <input
                 type="range"
                 min={0}
@@ -283,8 +307,7 @@ export const CustomVideoPlayer: React.FC<CustomVideoPlayerProps> = ({
                 step={0.05}
                 value={isMuted ? 0 : volume}
                 onChange={handleVolumeChange}
-                
-                
+                className="w-16 h-1 rounded-full appearance-none cursor-pointer bg-zinc-800 accent-indigo-500 focus:outline-none"
               />
             </div>
           </div>
@@ -292,7 +315,7 @@ export const CustomVideoPlayer: React.FC<CustomVideoPlayerProps> = ({
           {/* Fullscreen Button */}
           <button
             onClick={toggleFullscreen}
-            
+            className="w-8 h-8 rounded-full flex items-center justify-center text-zinc-300 hover:text-white hover:bg-zinc-800 transition-colors outline-none cursor-pointer"
             title={isFullscreen ? "Wyjdź z pełnego ekranu" : "Pełny ekran"}
           >
             {isFullscreen ? <BsFullscreenExit /> : <BsFullscreen />}

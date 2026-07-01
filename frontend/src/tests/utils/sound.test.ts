@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+
 import { playNotificationSound } from "../../utils/sound";
 
 describe("playNotificationSound", () => {
@@ -12,13 +13,19 @@ describe("playNotificationSound", () => {
   };
   let mockOsc: {
     type: string;
-    frequency: { setValueAtTime: ReturnType<typeof vi.fn>; exponentialRampToValueAtTime: ReturnType<typeof vi.fn> };
+    frequency: {
+      setValueAtTime: ReturnType<typeof vi.fn>;
+      exponentialRampToValueAtTime: ReturnType<typeof vi.fn>;
+    };
     connect: ReturnType<typeof vi.fn>;
     start: ReturnType<typeof vi.fn>;
     stop: ReturnType<typeof vi.fn>;
   };
   let mockGain: {
-    gain: { setValueAtTime: ReturnType<typeof vi.fn>; exponentialRampToValueAtTime: ReturnType<typeof vi.fn> };
+    gain: {
+      setValueAtTime: ReturnType<typeof vi.fn>;
+      exponentialRampToValueAtTime: ReturnType<typeof vi.fn>;
+    };
     connect: ReturnType<typeof vi.fn>;
   };
 
@@ -49,7 +56,10 @@ describe("playNotificationSound", () => {
       close: vi.fn(),
     };
 
-    vi.stubGlobal("AudioContext", vi.fn().mockImplementation(() => mockCtx));
+    vi.stubGlobal(
+      "AudioContext",
+      vi.fn().mockImplementation(() => mockCtx)
+    );
     vi.useFakeTimers();
   });
 
@@ -107,7 +117,12 @@ describe("playNotificationSound", () => {
   });
 
   it("does not throw if AudioContext constructor throws", () => {
-    vi.stubGlobal("AudioContext", vi.fn().mockImplementation(() => { throw new Error("unavailable"); }));
+    vi.stubGlobal(
+      "AudioContext",
+      vi.fn().mockImplementation(() => {
+        throw new Error("unavailable");
+      })
+    );
     expect(() => playNotificationSound("send", true)).not.toThrow();
   });
 
@@ -139,8 +154,9 @@ describe("playNotificationSound", () => {
 
   it("falls back to webkitAudioContext when AudioContext is unavailable", () => {
     vi.stubGlobal("AudioContext", undefined);
-    (window as Window & { webkitAudioContext?: unknown }).webkitAudioContext =
-      vi.fn().mockImplementation(() => mockCtx);
+    (window as Window & { webkitAudioContext?: unknown }).webkitAudioContext = vi
+      .fn()
+      .mockImplementation(() => mockCtx);
     playNotificationSound("send", true);
     expect(mockCtx.createOscillator).toHaveBeenCalledOnce();
   });

@@ -1,6 +1,7 @@
-import React from "react";
-import Header from "../Header";
-import Footer from "../Footer";
+import type React from "react";
+
+import Footer from "./Footer";
+import Header from "./Header";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -12,6 +13,12 @@ interface LayoutProps {
   className?: string;
 }
 
+/**
+ * @description Shared page shell: background glows, optional header/footer,
+ * and a centered content column. `fullScreen` opts out of the centered
+ * max-width column and page padding for screens that need to fill the
+ * viewport (e.g. the chat screen).
+ */
 export const Layout: React.FC<LayoutProps> = ({
   children,
   fullScreen = false,
@@ -33,9 +40,7 @@ export const Layout: React.FC<LayoutProps> = ({
       <div
         className={`relative z-10 flex flex-col w-full h-full min-h-0 ${fullScreen ? "" : "px-6 sm:px-12 pt-6 sm:pt-8 overflow-y-auto scroll-container"}`}
       >
-        {!hideHeader && (
-          <Header showBackLink={showBackLink} maxWidthClass={maxWidthClass} />
-        )}
+        {!hideHeader && <Header showBackLink={showBackLink} maxWidthClass={maxWidthClass} />}
 
         <main
           className={`flex-1 min-h-0 w-full mx-auto flex flex-col relative z-10 ${fullScreen ? "max-w-none" : `${maxWidthClass} mt-8 sm:mt-16 mb-16`}`}

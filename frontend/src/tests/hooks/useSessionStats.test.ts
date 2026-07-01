@@ -1,5 +1,6 @@
-import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
 import { renderHook, act } from "@testing-library/react";
+import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
+
 import { useSessionStats } from "../../hooks/useSessionStats";
 
 describe("useSessionStats", () => {
@@ -145,9 +146,7 @@ describe("useSessionStats", () => {
 
     it("sums all received message types", () => {
       const { result } = renderHook(() => useSessionStats());
-      act(() =>
-        result.current.incrementReceived({ text: 1, image: 2, audio: 4 }),
-      );
+      act(() => result.current.incrementReceived({ text: 1, image: 2, audio: 4 }));
       expect(result.current.derived.getTotalReceived()).toBe(7);
     });
   });
@@ -155,9 +154,7 @@ describe("useSessionStats", () => {
   describe("derived.getDynamicFeedback", () => {
     it("returns 'Brak danych' when no session", () => {
       const { result } = renderHook(() => useSessionStats());
-      expect(result.current.derived.getDynamicFeedback()).toBe(
-        "Brak danych o rozmowie.",
-      );
+      expect(result.current.derived.getDynamicFeedback()).toBe("Brak danych o rozmowie.");
     });
 
     it("returns quick-chat message for short session with received messages", () => {
@@ -167,9 +164,7 @@ describe("useSessionStats", () => {
       act(() => result.current.incrementReceived({ text: 1 }));
       vi.setSystemTime(11000); // 10 s later (< 15 s)
       act(() => result.current.endSession());
-      expect(result.current.derived.getDynamicFeedback()).toBe(
-        "Szybka wymiana zdań i po krzyku.",
-      );
+      expect(result.current.derived.getDynamicFeedback()).toBe("Szybka wymiana zdań i po krzyku.");
     });
 
     it("returns 'uciekł' message for short session with no received messages", () => {
@@ -179,7 +174,7 @@ describe("useSessionStats", () => {
       vi.setSystemTime(11000); // 10 s later (< 15 s)
       act(() => result.current.endSession());
       expect(result.current.derived.getDynamicFeedback()).toBe(
-        "Obcy uciekł bez słowa... Szkoda czasu!",
+        "Obcy uciekł bez słowa... Szkoda czasu!"
       );
     });
 
@@ -192,7 +187,7 @@ describe("useSessionStats", () => {
       vi.setSystemTime(201000); // 200 s later (> 180 s, sent+received = 40 > 30)
       act(() => result.current.endSession());
       expect(result.current.derived.getDynamicFeedback()).toBe(
-        "Świetna rozmowa! Wymieniliście sporo wiadomości.",
+        "Świetna rozmowa! Wymieniliście sporo wiadomości."
       );
     });
 
@@ -204,7 +199,7 @@ describe("useSessionStats", () => {
       vi.setSystemTime(31000); // 30 s (> 15 s, not short)
       act(() => result.current.endSession());
       expect(result.current.derived.getDynamicFeedback()).toBe(
-        "Monolog? Chyba mówiłeś tylko Ty...",
+        "Monolog? Chyba mówiłeś tylko Ty..."
       );
     });
 
@@ -216,7 +211,7 @@ describe("useSessionStats", () => {
       vi.setSystemTime(31000); // 30 s (> 15 s, not short)
       act(() => result.current.endSession());
       expect(result.current.derived.getDynamicFeedback()).toBe(
-        "Ciekawy słuchacz z Ciebie - nic nie napisałeś!",
+        "Ciekawy słuchacz z Ciebie - nic nie napisałeś!"
       );
     });
 
@@ -229,7 +224,7 @@ describe("useSessionStats", () => {
       vi.setSystemTime(61000); // 60 s - medium session, < 30 total messages
       act(() => result.current.endSession());
       expect(result.current.derived.getDynamicFeedback()).toBe(
-        "Ciekawa pogawędka. Może kolejny obcy będzie jeszcze lepszy?",
+        "Ciekawa pogawędka. Może kolejny obcy będzie jeszcze lepszy?"
       );
     });
   });

@@ -5,7 +5,6 @@ them trivially unit-testable. State is passed in explicitly as arguments.
 """
 
 import logging
-import math
 from typing import Optional
 
 from ..utils.math import haversine
@@ -103,14 +102,12 @@ def _gender_match(p1: dict, p2: dict) -> bool:
 
 
 def _age_match(p1: dict, p2: dict) -> bool:
-    return _within_range(
-        p2.get("age"), p1.get("ageMin"), p1.get("ageMax")
-    ) and _within_range(p1.get("age"), p2.get("ageMin"), p2.get("ageMax"))
+    return _within_range(p2.get("age"), p1.get("ageMin"), p1.get("ageMax")) and _within_range(
+        p1.get("age"), p2.get("ageMin"), p2.get("ageMax")
+    )
 
 
-def _within_range(
-    age: Optional[int], min_age: Optional[int], max_age: Optional[int]
-) -> bool:
+def _within_range(age: Optional[int], min_age: Optional[int], max_age: Optional[int]) -> bool:
     if age is None:
         return True
     if min_age is not None and age < min_age:

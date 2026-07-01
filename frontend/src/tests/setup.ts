@@ -12,8 +12,7 @@ try {
   const createShim = () => {
     let store: Record<string, string> = {};
     return {
-      getItem: (key: string): string | null =>
-        key in store ? store[key] : null,
+      getItem: (key: string): string | null => (key in store ? store[key] : null),
       setItem: (key: string, value: string): void => {
         store[key] = String(value);
       },

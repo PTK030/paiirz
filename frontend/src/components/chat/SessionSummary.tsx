@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+
 import type { SessionStats } from "../../types/message";
 
 interface SessionSummaryProps {
@@ -12,9 +13,7 @@ interface SessionSummaryProps {
   onNewConversation: () => void;
 }
 
-/**
- * Post-session statistics modal. Shown when a stranger disconnects.
- */
+/** @description Post-session statistics modal, shown when a stranger disconnects. */
 export function SessionSummary({
   sessionStats,
   formatDuration,
@@ -49,16 +48,12 @@ export function SessionSummary({
         </div>
 
         <div className="bg-zinc-800/40 border border-zinc-700/50 rounded-xl p-4 text-center italic text-zinc-300 font-medium text-sm shadow-inner">
-          "{getDynamicFeedback()}"
+          &quot;{getDynamicFeedback()}&quot;
         </div>
 
         <div className="grid grid-cols-2 gap-3 w-full">
           <StatCard label="Czas trwania" value={formatDuration()} />
-          <StatCard
-            label="Tempo pisania"
-            value={`${calculateWPM()}`}
-            suffix="sł/min"
-          />
+          <StatCard label="Tempo pisania" value={`${calculateWPM()}`} suffix="sł/min" />
           <StatCard
             label="Wysłane (Ty)"
             value={`${getTotalSent()}`}
@@ -79,7 +74,13 @@ export function SessionSummary({
         >
           <span className="relative z-10 flex items-center justify-center gap-2">
             Rozpocznij nową rozmowę
-            <svg className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+            <svg
+              className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-1"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2.5}
+            >
               <path strokeLinecap="round" strokeLinejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
             </svg>
           </span>
@@ -99,19 +100,16 @@ interface StatCardProps {
   sub?: string;
 }
 
+/** @description Single labeled stat tile used in the session summary grid. */
 function StatCard({ label, value, suffix, color, sub }: StatCardProps) {
   const valueColor =
-    color === "indigo"
-      ? "text-indigo-400"
-      : color === "cyan"
-      ? "text-cyan-400"
-      : "text-white";
+    color === "indigo" ? "text-indigo-400" : color === "cyan" ? "text-cyan-400" : "text-white";
   const labelColor =
     color === "indigo"
       ? "text-indigo-400/80"
       : color === "cyan"
-      ? "text-cyan-400/80"
-      : "text-zinc-500";
+        ? "text-cyan-400/80"
+        : "text-zinc-500";
 
   return (
     <div className="flex flex-col items-center justify-center bg-zinc-950/50 border border-zinc-800/50 rounded-xl p-4">
@@ -120,13 +118,9 @@ function StatCard({ label, value, suffix, color, sub }: StatCardProps) {
       </span>
       <span className={`text-xl font-black ${valueColor}`}>
         {value}
-        {suffix && (
-          <span className="text-xs font-medium text-zinc-500 ml-1">{suffix}</span>
-        )}
+        {suffix && <span className="text-xs font-medium text-zinc-500 ml-1">{suffix}</span>}
       </span>
-      {sub && (
-        <span className="text-[10px] text-zinc-500 mt-1 font-medium">{sub}</span>
-      )}
+      {sub && <span className="text-[10px] text-zinc-500 mt-1 font-medium">{sub}</span>}
     </div>
   );
 }

@@ -97,9 +97,10 @@ export interface UseLocationAutocompleteResult {
 }
 
 /**
- * Returns autocomplete suggestions for Polish cities.
- *
+ * @description Returns debounced, deduplicated autocomplete suggestions for
+ * Polish cities as the user types, cancelling stale in-flight requests.
  * @param query - Raw text typed by the user (not debounced externally).
+ * @returns The current suggestion list and whether a request is in flight.
  */
 export function useLocationAutocomplete(query: string): UseLocationAutocompleteResult {
   const [suggestions, setSuggestions] = useState<LocationSuggestion[]>([]);
@@ -128,9 +129,7 @@ export function useLocationAutocomplete(query: string): UseLocationAutocompleteR
 
         const data: NominatimResult[] = await res.json();
 
-        const mapped = data
-          .map(toSuggestion)
-          .filter((s): s is LocationSuggestion => s !== null);
+        const mapped = data.map(toSuggestion).filter((s): s is LocationSuggestion => s !== null);
 
         setSuggestions(deduplicateByNameAndState(mapped));
       } catch (err) {

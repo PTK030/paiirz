@@ -29,16 +29,13 @@ class Config:
         """Build a Config from environment variables with safe defaults."""
         raw_origins = os.getenv("CORS_ALLOWED_ORIGINS", "*")
         origins: str | list[str] = (
-            [o.strip() for o in raw_origins.split(",") if o.strip()]
-            if raw_origins != "*"
-            else "*"
+            [o.strip() for o in raw_origins.split(",") if o.strip()] if raw_origins != "*" else "*"
         )
 
         return cls(
             SECRET_KEY=os.getenv("SECRET_KEY", "dev-secret-change-in-production"),
             IP_SALT=os.getenv("IP_SALT") or uuid.uuid4().hex,
             CORS_ALLOWED_ORIGINS=origins,
-            FLASK_DEBUG=os.getenv("FLASK_DEBUG", "False").lower()
-            in ("true", "1", "yes"),
+            FLASK_DEBUG=os.getenv("FLASK_DEBUG", "False").lower() in ("true", "1", "yes"),
             PORT=int(os.getenv("PORT", 5000)),
         )

@@ -25,6 +25,9 @@ logger = logging.getLogger(__name__)
 _MAX_IMAGE_BYTES = 9 * 1024 * 1024
 _MAX_VIDEO_BYTES = 24 * 1024 * 1024
 _MAX_CONTACT_CHARS = 1000
+# Encrypted text is base64 ciphertext, comfortably larger than the plaintext -
+# this rejects abusive payloads while leaving generous room for real messages.
+_MAX_MESSAGE_CHARS = 20_000
 
 
 def register(sio: SocketIO) -> None:
@@ -46,6 +49,7 @@ def register(sio: SocketIO) -> None:
 
 
 def _on_message(data: dict) -> None:
+    """Validate, rate-limit, and broadcast a chat message (text/image/audio/video)."""
     sid = request.sid
     room_id = data.get("room")
     message = data.get("message")
@@ -55,10 +59,14 @@ def _on_message(data: dict) -> None:
 
     if not room_id or not any([message, image, audio, video]):
         return
+    if not all(isinstance(v, str) or v is None for v in (message, image, audio, video)):
+        return
 
     if image and len(image) > _MAX_IMAGE_BYTES:
         return
     if video and len(video) > _MAX_VIDEO_BYTES:
+        return
+    if message and len(message) > _MAX_MESSAGE_CHARS:
         return
 
     result = rl_check(sid, message_timestamps, blocked_until)
@@ -92,6 +100,7 @@ def _on_message(data: dict) -> None:
 
 
 def _on_message_reaction(data: dict) -> None:
+    """Relay an emoji reaction on a message to the other room participant."""
     room_id = data.get("room")
     message_id = data.get("messageId")
     if room_id and message_id:
@@ -108,6 +117,7 @@ def _on_message_reaction(data: dict) -> None:
 
 
 def _on_typing(data: dict) -> None:
+    """Relay a typing-indicator toggle to the other room participant."""
     room_id = data.get("room")
     if room_id:
         emit(
@@ -122,6 +132,7 @@ def _on_typing(data: dict) -> None:
 
 
 def _on_toggle_vanish(data: dict) -> None:
+    """Relay a vanish-mode toggle to the other room participant."""
     room_id = data.get("room")
     if room_id:
         emit(
@@ -136,6 +147,7 @@ def _on_toggle_vanish(data: dict) -> None:
 
 
 def _on_screenshot_taken(data: dict) -> None:
+    """Notify the other room participant that a screenshot was taken."""
     room_id = data.get("room")
     if room_id:
         emit(
@@ -150,6 +162,7 @@ def _on_screenshot_taken(data: dict) -> None:
 
 
 def _on_view_once_consumed(data: dict) -> None:
+    """Notify the other room participant that a view-once media item was opened."""
     room_id = data.get("room")
     message_id = data.get("messageId")
     if room_id and message_id:
@@ -165,6 +178,7 @@ def _on_view_once_consumed(data: dict) -> None:
 
 
 def _on_unsend_message(data: dict) -> None:
+    """Notify the other room participant that a message was unsent."""
     room_id = data.get("room")
     message_id = data.get("messageId")
     if room_id and message_id:
@@ -180,6 +194,7 @@ def _on_unsend_message(data: dict) -> None:
 
 
 def _on_share_contact(data: dict) -> None:
+    """Store the sender's contact and exchange contacts once both sides have shared."""
     sid = request.sid
     room_id = data.get("room")
     contact = data.get("contact")
@@ -206,6 +221,7 @@ def _on_share_contact(data: dict) -> None:
 
 
 def _on_block_user(data: dict) -> None:
+    """Persistently block the room partner and tear down the shared room."""
     sid = request.sid
     room_id = data.get("room")
 

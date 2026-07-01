@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+
 import { getUserCountText } from "../../utils/roomCode";
 import { BrandLogo } from "../ui/BrandLogo";
 
@@ -10,9 +11,7 @@ interface ChatHeaderProps {
   onToggleSounds: () => void;
 }
 
-/**
- * Floating top bar: logo, sound toggle, E2EE status badge, online user count.
- */
+/** @description Floating top bar: logo, sound toggle, E2EE status badge, online user count. */
 export function ChatHeader({
   userCount,
   isStrangerInRoom,
@@ -34,11 +33,7 @@ export function ChatHeader({
             stroke="currentColor"
             strokeWidth={2.5}
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M10 19l-7-7m0 0l7-7m-7 7h18"
-            />
+            <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
           </svg>
         </Link>
         <h1 className="flex items-center select-none mb-[2px]">
@@ -122,9 +117,7 @@ export function ChatHeader({
                 d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
               />
             </svg>
-            <span className="hidden sm:inline">
-              {e2eReady ? "E2EE" : "Szyfrowanie…"}
-            </span>
+            <span className="hidden sm:inline">{e2eReady ? "E2EE" : "Szyfrowanie…"}</span>
           </div>
         )}
 

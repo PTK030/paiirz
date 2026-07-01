@@ -1,35 +1,64 @@
-import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
-import { Layout } from "../components/ui/Layout";
-import { AnimatedPage } from "../components/ui/AnimatedPage";
-import { Card } from "../components/ui/Card";
-import { Button } from "../components/ui/Button";
+import { Link } from "react-router-dom";
 
+import { AnimatedPage } from "../components/ui/AnimatedPage";
+import { Button } from "../components/ui/Button";
+import { Card } from "../components/ui/Card";
+import { Layout } from "../components/ui/Layout";
+
+/** Characters shown in the feature card preview before it's truncated with "...". */
+const FEATURE_EXCERPT_LENGTH = 110;
+
+/** Static marketing copy for the "features" bento grid on the landing page. */
 const featureDetails = [
   {
     title: "Pełna prywatność P2P",
     iconColor: "text-indigo-400",
     bgClass: "bg-indigo-500/10 border-indigo-500/20",
     icon: (
-      <svg className="w-8 h-8 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+      <svg
+        className="w-8 h-8 text-indigo-400"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+        />
       </svg>
     ),
-    description: "Komunikator paiirz łączy Cię bezpośrednio z rozmówcą. Wszelkie wiadomości, zdjęcia i pliki wideo są przesyłane bezpośrednio z przeglądarki do przeglądarki (Peer-to-Peer), bez udziału jakichkolwiek serwerów pośredniczących w archiwizacji danych.",
-    highlight: "Połączenie w pełni omija centralną infrastrukturę – nikt oprócz Was nie ma fizycznego dostępu do wysyłanych treści."
+    description:
+      "Komunikator paiirz łączy Cię bezpośrednio z rozmówcą. Wszelkie wiadomości, zdjęcia i pliki wideo są przesyłane bezpośrednio z przeglądarki do przeglądarki (Peer-to-Peer), bez udziału jakichkolwiek serwerów pośredniczących w archiwizacji danych.",
+    highlight:
+      "Połączenie w pełni omija centralną infrastrukturę – nikt oprócz Was nie ma fizycznego dostępu do wysyłanych treści.",
   },
   {
     title: "Znikające media",
     iconColor: "text-violet-400",
     bgClass: "bg-violet-500/10 border-violet-500/20",
     icon: (
-      <svg className="w-8 h-8 text-violet-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+      <svg
+        className="w-8 h-8 text-violet-400"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+        />
       </svg>
     ),
-    description: "Zdjęcia, filmy oraz wiadomości głosowe ulegają automatycznemu zniszczeniu już 5 sekund po ich jednokrotnym otwarciu przez rozmówcę. Zapewnia to wysoki komfort przesyłania prywatnych materiałów.",
-    highlight: "Komunikator posiada wbudowane wykrywanie prób zrobienia zrzutów ekranu, natychmiast zamykając podgląd."
+    description:
+      "Zdjęcia, filmy oraz wiadomości głosowe ulegają automatycznemu zniszczeniu już 5 sekund po ich jednokrotnym otwarciu przez rozmówcę. Zapewnia to wysoki komfort przesyłania prywatnych materiałów.",
+    highlight:
+      "Komunikator posiada wbudowane wykrywanie prób zrobienia zrzutów ekranu, natychmiast zamykając podgląd.",
   },
   {
     title: "Zaawansowane filtry",
@@ -37,11 +66,18 @@ const featureDetails = [
     bgClass: "bg-cyan-500/10 border-cyan-500/20",
     icon: (
       <svg className="w-8 h-8 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"
+        />
       </svg>
     ),
-    description: "Nie musisz tracić czasu na rozmowy z losowymi osobami o zupełnie odmiennych oczekiwaniach. Nasz algorytm dopasowywania umożliwia zawężenie kryteriów wyszukiwania.",
-    highlight: "Filtruj partnerów według województw, konkretnych miast, przedziałów wiekowych oraz preferencji płciowych."
+    description:
+      "Nie musisz tracić czasu na rozmowy z losowymi osobami o zupełnie odmiennych oczekiwaniach. Nasz algorytm dopasowywania umożliwia zawężenie kryteriów wyszukiwania.",
+    highlight:
+      "Filtruj partnerów według województw, konkretnych miast, przedziałów wiekowych oraz preferencji płciowych.",
   },
   {
     title: "Gry lodołamacze",
@@ -49,21 +85,32 @@ const featureDetails = [
     bgClass: "bg-rose-500/10 border-rose-500/20",
     icon: (
       <svg className="w-8 h-8 text-rose-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+        />
       </svg>
     ),
-    description: "Zapomnij o niezręcznej ciszy i nudnych początkach. Oferujemy unikalny, zintegrowany z czatem moduł gier towarzyskich typu 'To czy Tamto' oraz 'Prawda czy Wyzwanie'.",
-    highlight: "Gry możesz zaproponować w dowolnym momencie. Druga strona decyduje, czy chce dołączyć do zabawy."
-  }
+    description:
+      "Zapomnij o niezręcznej ciszy i nudnych początkach. Oferujemy unikalny, zintegrowany z czatem moduł gier towarzyskich typu 'To czy Tamto' oraz 'Prawda czy Wyzwanie'.",
+    highlight:
+      "Gry możesz zaproponować w dowolnym momencie. Druga strona decyduje, czy chce dołączyć do zabawy.",
+  },
 ];
 
+/**
+ * @description Landing page: hero headline, "start a conversation" CTA, and
+ * a bento-style feature grid where each card opens a modal with the full
+ * description on click.
+ */
 const WelcomePage = () => {
-  const [selectedFeature, setSelectedFeature] = useState<typeof featureDetails[0] | null>(null);
+  const [selectedFeature, setSelectedFeature] = useState<(typeof featureDetails)[0] | null>(null);
 
   return (
     <Layout maxWidthClass="max-w-6xl">
       <AnimatedPage className="flex flex-col items-center justify-center gap-12 my-auto">
-        
         {/* Title & Headline */}
         <div className="flex flex-col items-center gap-4 text-center max-w-2xl mt-4 sm:mt-12">
           <motion.h1
@@ -80,7 +127,8 @@ const WelcomePage = () => {
             transition={{ duration: 0.5, delay: 0.2 }}
             className="text-sm sm:text-base text-zinc-400 leading-relaxed max-w-lg"
           >
-            Rozmawiaj bezpośrednio bez pośredników, rejestracji i śladów w sieci. Całkowicie prywatny czat z automatycznie wygasającymi wiadomościami.
+            Rozmawiaj bezpośrednio bez pośredników, rejestracji i śladów w sieci. Całkowicie
+            prywatny czat z automatycznie wygasającymi wiadomościami.
           </motion.p>
         </div>
 
@@ -92,11 +140,27 @@ const WelcomePage = () => {
           className="flex flex-col items-center gap-4 w-full max-w-xs relative group"
         >
           <Link to="/chat" className="w-full block outline-none">
-            <Button variant="primary" size="lg" fullWidth className="relative overflow-hidden group">
+            <Button
+              variant="primary"
+              size="lg"
+              fullWidth
+              className="relative overflow-hidden group"
+            >
               <span className="relative z-10 flex items-center justify-center gap-2">
                 Rozpocznij konwersację
-                <svg className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                <svg
+                  className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2.5}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2.5}
+                    d="M14 5l7 7m0 0l-7 7m7-7H3"
+                  />
                 </svg>
               </span>
             </Button>
@@ -115,13 +179,27 @@ const WelcomePage = () => {
           transition={{ duration: 0.6, delay: 0.4 }}
           className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-4xl"
         >
-          {featureDetails.map((feature, index) => (
-            <div key={index} onClick={() => setSelectedFeature(feature)} className="w-full">
-              <Card interactive glowColor="indigo" className="h-full group relative flex items-start gap-4">
+          {featureDetails.map((feature) => (
+            <div key={feature.title} onClick={() => setSelectedFeature(feature)} className="w-full">
+              <Card
+                interactive
+                glowColor="indigo"
+                className="h-full group relative flex items-start gap-4"
+              >
                 {/* Diagonal Arrow Indicator */}
                 <div className="absolute top-4 right-4 text-zinc-600 opacity-35 group-hover:opacity-80 transition-all duration-300 transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5">
-                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25" />
+                  <svg
+                    className="w-3 h-3"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={1.5}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25"
+                    />
                   </svg>
                 </div>
                 <div className="p-3 rounded-xl bg-zinc-900/80 border border-zinc-800 text-white shadow-inner group-hover:bg-zinc-800/80 transition-colors">
@@ -130,7 +208,7 @@ const WelcomePage = () => {
                 <div className="flex flex-col gap-1 pr-4">
                   <h3 className="text-sm font-semibold text-zinc-100">{feature.title}</h3>
                   <p className="text-xs leading-relaxed text-zinc-400">
-                    {feature.description.substring(0, 110)}...
+                    {feature.description.substring(0, FEATURE_EXCERPT_LENGTH)}...
                   </p>
                 </div>
               </Card>
@@ -167,7 +245,9 @@ const WelcomePage = () => {
 
                 {/* Modal Header */}
                 <div className="flex items-center gap-3">
-                  <div className={`p-2.5 rounded-xl ${selectedFeature.bgClass} border flex items-center justify-center`}>
+                  <div
+                    className={`p-2.5 rounded-xl ${selectedFeature.bgClass} border flex items-center justify-center`}
+                  >
                     {selectedFeature.icon}
                   </div>
                   <h3 className="text-lg font-bold text-white tracking-tight">
@@ -181,8 +261,18 @@ const WelcomePage = () => {
                     {selectedFeature.description}
                   </p>
                   <div className="bg-zinc-900/60 border border-zinc-800/80 rounded-xl p-4 text-xs text-zinc-400 leading-relaxed flex items-start gap-2.5">
-                    <svg className={`w-4 h-4 shrink-0 mt-0.5 ${selectedFeature.iconColor}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    <svg
+                      className={`w-4 h-4 shrink-0 mt-0.5 ${selectedFeature.iconColor}`}
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
                     </svg>
                     <span>{selectedFeature.highlight}</span>
                   </div>
@@ -190,14 +280,28 @@ const WelcomePage = () => {
 
                 {/* Modal Footer CTA */}
                 <div className="flex gap-3 mt-2">
-                  <Button variant="ghost" onClick={() => setSelectedFeature(null)} className="flex-1">
+                  <Button
+                    variant="ghost"
+                    onClick={() => setSelectedFeature(null)}
+                    className="flex-1"
+                  >
                     Zamknij
                   </Button>
                   <Link to="/chat" className="flex-1 block outline-none">
                     <Button variant="primary" fullWidth className="h-full">
                       Czat
-                      <svg className="w-3.5 h-3.5 ml-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                      <svg
+                        className="w-3.5 h-3.5 ml-1.5"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth={2.5}
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M14 5l7 7m0 0l-7 7m7-7H3"
+                        />
                       </svg>
                     </Button>
                   </Link>
@@ -206,7 +310,6 @@ const WelcomePage = () => {
             </motion.div>
           )}
         </AnimatePresence>
-
       </AnimatedPage>
     </Layout>
   );

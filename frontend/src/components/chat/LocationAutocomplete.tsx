@@ -12,11 +12,13 @@
  *  - Fully accessible: role="combobox", role="listbox", aria-activedescendant
  */
 
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import type React from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
+
 import {
   useLocationAutocomplete,
   type LocationSuggestion,
-} from "../hooks/useLocationAutocomplete";
+} from "../../hooks/useLocationAutocomplete";
 
 // ─── Props ─────────────────────────────────────────────────────────────────────
 
@@ -35,6 +37,12 @@ interface LocationAutocompleteProps {
 
 // ─── Component ─────────────────────────────────────────────────────────────────
 
+/**
+ * @description Renders a location search input with a keyboard-navigable
+ * suggestions dropdown (see module doc above for the full UX contract).
+ * Purely controlled - all state (text, selection, coordinates) is owned by
+ * the caller via `value`/`onChange`/`onSelect`/`onClear`.
+ */
 export const LocationAutocomplete: React.FC<LocationAutocompleteProps> = ({
   value,
   onChange,
@@ -76,7 +84,7 @@ export const LocationAutocomplete: React.FC<LocationAutocompleteProps> = ({
       setActiveIndex(-1);
       onSelect(suggestion);
     },
-    [onChange, onSelect],
+    [onChange, onSelect]
   );
 
   const handleClear = () => {
@@ -120,10 +128,7 @@ export const LocationAutocomplete: React.FC<LocationAutocompleteProps> = ({
 
   useEffect(() => {
     const onPointerDown = (e: PointerEvent) => {
-      if (
-        containerRef.current &&
-        !containerRef.current.contains(e.target as Node)
-      ) {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
         setIsOpen(false);
       }
     };
@@ -135,17 +140,14 @@ export const LocationAutocomplete: React.FC<LocationAutocompleteProps> = ({
 
   useEffect(() => {
     if (activeIndex < 0 || !listRef.current) return;
-    const item = listRef.current.children[activeIndex] as
-      | HTMLElement
-      | undefined;
+    const item = listRef.current.children[activeIndex] as HTMLElement | undefined;
     item?.scrollIntoView({ block: "nearest" });
   }, [activeIndex]);
 
   // ── Render ─────────────────────────────────────────────────────────────────
 
   const listboxId = "location-listbox";
-  const activeDescendant =
-    activeIndex >= 0 ? `loc-opt-${activeIndex}` : undefined;
+  const activeDescendant = activeIndex >= 0 ? `loc-opt-${activeIndex}` : undefined;
 
   return (
     <div ref={containerRef} className={`relative ${className}`}>
@@ -196,11 +198,7 @@ export const LocationAutocomplete: React.FC<LocationAutocompleteProps> = ({
                 stroke="currentColor"
                 strokeWidth={2.5}
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M6 18L18 6M6 6l12 12"
-                />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
           ) : null}

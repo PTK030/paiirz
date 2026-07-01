@@ -1,5 +1,6 @@
 // ─── Icebreaker ───────────────────────────────────────────────────────────────
 
+/** Server-authoritative state of an icebreaker mini-game attached to a message. */
 export interface IcebreakerData {
   type: "this_or_that" | "truth_or_dare";
   question: string;
@@ -16,6 +17,7 @@ export interface IcebreakerData {
 
 // ─── Message ──────────────────────────────────────────────────────────────────
 
+/** A single chat message as rendered locally (already decrypted, if applicable). */
 export interface Message {
   id: string;
   sid: string;
@@ -34,6 +36,7 @@ export interface Message {
 
 // ─── Session Stats ────────────────────────────────────────────────────────────
 
+/** Raw counters tracked for the current chat session (see {@link useSessionStats}). */
 export interface SessionStats {
   startTime: number | null;
   endTime: number | null;

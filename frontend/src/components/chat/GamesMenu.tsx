@@ -1,5 +1,5 @@
-import { useState } from "react";
 import { motion } from "framer-motion";
+import { useState } from "react";
 
 type GameType = "this_or_that" | "truth_or_dare";
 type TdChoice = "truth" | "dare";
@@ -10,13 +10,13 @@ interface GamesMenuProps {
 }
 
 /**
- * Floating dropdown with icebreaker game options.
- * Provides both standard random games and custom user-defined games.
+ * @description Floating dropdown with icebreaker game options - standard
+ * random games ("This or That", "Truth or Dare") plus a custom tab where the
+ * user writes their own question/options before triggering the game.
  */
 export function GamesMenu({ onTrigger, onClose }: GamesMenuProps) {
   const [tab, setTab] = useState<"standard" | "custom">("standard");
-  const [customGameType, setCustomGameType] =
-    useState<GameType>("this_or_that");
+  const [customGameType, setCustomGameType] = useState<GameType>("this_or_that");
   const [customQ, setCustomQ] = useState("");
   const [customOpt1, setCustomOpt1] = useState("");
   const [customOpt2, setCustomOpt2] = useState("");
@@ -171,9 +171,7 @@ export function GamesMenu({ onTrigger, onClose }: GamesMenuProps) {
                 value={customTdText}
                 onChange={(e) => setCustomTdText(e.target.value)}
                 placeholder={
-                  customTdChoice === "truth"
-                    ? "Zadaj pytanie (Prawda)"
-                    : "Wpisz wyzwanie"
+                  customTdChoice === "truth" ? "Zadaj pytanie (Prawda)" : "Wpisz wyzwanie"
                 }
                 rows={3}
                 maxLength={120}
@@ -220,13 +218,7 @@ function TabBtn({
   );
 }
 
-function GameBtn({
-  onClick,
-  children,
-}: {
-  onClick: () => void;
-  children: React.ReactNode;
-}) {
+function GameBtn({ onClick, children }: { onClick: () => void; children: React.ReactNode }) {
   return (
     <button
       type="button"
@@ -252,9 +244,7 @@ function ToggleBtn({
       type="button"
       onClick={onClick}
       className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-all ${
-        active
-          ? "bg-zinc-800 text-indigo-400 shadow-md"
-          : "text-zinc-500 hover:text-zinc-300"
+        active ? "bg-zinc-800 text-indigo-400 shadow-md" : "text-zinc-500 hover:text-zinc-300"
       }`}
     >
       {children}

@@ -12,11 +12,11 @@ const sizeConfig = {
   lg: "text-5xl sm:text-6xl",
 };
 
-export function BrandLogo({
-  size = "sm",
-  className = "",
-  premium = false,
-}: BrandLogoProps) {
+/**
+ * @description Renders the app's wordmark. The `premium` variant layers a
+ * gradient-filled duplicate over the base text for a shimmer effect.
+ */
+export function BrandLogo({ size = "sm", className = "", premium = false }: BrandLogoProps) {
   if (!premium) {
     return (
       <span
@@ -34,10 +34,7 @@ export function BrandLogo({
       aria-label={BRAND_NAME}
     >
       <span className="brand-logo-premium-base">{BRAND_NAME}</span>
-      <span
-        aria-hidden="true"
-        className="absolute inset-0 brand-logo-premium-fill"
-      >
+      <span aria-hidden="true" className="absolute inset-0 brand-logo-premium-fill">
         {BRAND_NAME}
       </span>
     </span>

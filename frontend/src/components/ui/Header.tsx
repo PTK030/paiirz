@@ -1,15 +1,14 @@
 import { Link } from "react-router-dom";
-import { BrandLogo } from "./ui/BrandLogo";
+
+import { BrandLogo } from "./BrandLogo";
 
 interface HeaderProps {
   showBackLink?: boolean;
   maxWidthClass?: string;
 }
 
-const Header = ({
-  showBackLink = false,
-  maxWidthClass = "max-w-3xl",
-}: HeaderProps) => {
+/** @description Page header: brand logo link plus an optional "back to home" link. */
+const Header = ({ showBackLink = false, maxWidthClass = "max-w-3xl" }: HeaderProps) => {
   return (
     <header
       className={`w-full ${maxWidthClass} mx-auto flex items-center justify-between z-10 select-none`}
@@ -33,11 +32,7 @@ const Header = ({
             stroke="currentColor"
             strokeWidth={2}
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M10 19l-7-7m0 0l7-7m-7 7h18"
-            />
+            <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
           </svg>
           Wróć do strony głównej
         </Link>

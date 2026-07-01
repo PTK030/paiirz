@@ -26,6 +26,11 @@ logger = logging.getLogger(__name__)
 
 _VALID_GAME_TYPES = {"this_or_that", "truth_or_dare"}
 
+# Custom icebreaker content is free-form client input, broadcast to the whole
+# room and kept in server memory for the room's lifetime - cap it defensively.
+_MAX_CUSTOM_TEXT_CHARS = 300
+_MAX_CUSTOM_OPTIONS = 6
+
 
 def register(sio: SocketIO) -> None:
     """Attach icebreaker handlers to the SocketIO instance."""
@@ -39,6 +44,7 @@ def register(sio: SocketIO) -> None:
 
 
 def _on_trigger_icebreaker(data: dict) -> None:
+    """Create a new icebreaker game and broadcast it as a system message."""
     room_id = data.get("room")
     game_type = data.get("type")
     sid = request.sid
@@ -64,6 +70,7 @@ def _on_trigger_icebreaker(data: dict) -> None:
 
 
 def _on_action_icebreaker(data: dict) -> None:
+    """Dispatch a player action (vote/accept/skip/etc.) to the active game."""
     room_id = data.get("room")
     msg_id = data.get("messageId")
     action_type = data.get("actionType", "vote")
@@ -95,18 +102,17 @@ def _on_action_icebreaker(data: dict) -> None:
 # ---------------------------------------------------------------------------
 
 
-def _create_game(
-    game_type: str, sid: str, users: list, custom_data: dict | None
-) -> dict:
+def _create_game(game_type: str, sid: str, users: list, custom_data: dict | None) -> dict:
+    """Build the initial state dict for a new icebreaker game."""
     if game_type == "this_or_that":
         return _new_this_or_that(sid, custom_data)
     return _new_truth_or_dare(sid, users, custom_data)
 
 
 def _new_this_or_that(sid: str, custom_data: dict | None) -> dict:
-    if custom_data:
-        question = custom_data.get("question", "To czy To?")
-        options = custom_data.get("options", ["A", "B"])
+    if custom_data and isinstance(custom_data, dict):
+        question = _sanitize_text(custom_data.get("question"), "To czy To?")
+        options = _sanitize_options(custom_data.get("options"), ["A", "B"])
     else:
         q = random.choice(THIS_OR_THAT)
         question, options = q["q"], q["opts"]
@@ -124,8 +130,10 @@ def _new_this_or_that(sid: str, custom_data: dict | None) -> dict:
 
 
 def _new_truth_or_dare(sid: str, users: list, custom_data: dict | None) -> dict:
-    if custom_data:
-        choice = custom_data.get("choice", "truth")
+    if custom_data and isinstance(custom_data, dict):
+        choice = (
+            custom_data.get("choice") if custom_data.get("choice") in ("truth", "dare") else "truth"
+        )
         partner_sid = next((u for u in users if u != sid), sid)
         return {
             "type": "truth_or_dare",
@@ -136,7 +144,7 @@ def _new_truth_or_dare(sid: str, users: list, custom_data: dict | None) -> dict:
             "turn_sid": partner_sid,
             "voter_sid": partner_sid,
             "question": "Prawda" if choice == "truth" else "Wyzwanie",
-            "result": custom_data.get("text", ""),
+            "result": _sanitize_text(custom_data.get("text"), ""),
             "ready_for_next": [],
             "is_custom": True,
         }
@@ -155,12 +163,30 @@ def _new_truth_or_dare(sid: str, users: list, custom_data: dict | None) -> dict:
     }
 
 
+def _sanitize_text(value: object, default: str) -> str:
+    """Coerce free-form client text into a bounded, safe string."""
+    if not isinstance(value, str) or not value.strip():
+        return default
+    return value.strip()[:_MAX_CUSTOM_TEXT_CHARS]
+
+
+def _sanitize_options(value: object, default: list[str]) -> list[str]:
+    """Coerce a client-supplied options list into a bounded list of strings."""
+    if not isinstance(value, list) or not value:
+        return default
+    options = [
+        v.strip()[:_MAX_CUSTOM_TEXT_CHARS] for v in value if isinstance(v, str) and v.strip()
+    ]
+    return options[:_MAX_CUSTOM_OPTIONS] if options else default
+
+
 # ---------------------------------------------------------------------------
 # Action handlers (one function per action type)
 # ---------------------------------------------------------------------------
 
 
 def _handle_accept(game: dict, sid: str, users: list, data: dict) -> None:
+    """Mark sid as having accepted a proposed game; start it once both accept."""
     if game["status"] != "proposed":
         return
     accepted = game.setdefault("accepted_users", [])
@@ -171,15 +197,18 @@ def _handle_accept(game: dict, sid: str, users: list, data: dict) -> None:
 
 
 def _handle_decline(game: dict, sid: str, users: list, data: dict) -> None:
+    """Mark a proposed game as declined."""
     if game["status"] == "proposed":
         game["status"] = "declined"
 
 
 def _handle_quit(game: dict, sid: str, users: list, data: dict) -> None:
+    """Mark a game as quit, ending it for both participants."""
     game["status"] = "quit"
 
 
 def _handle_vote(game: dict, sid: str, users: list, data: dict) -> None:
+    """Record a vote/choice and reveal the result once all votes are in."""
     if game["status"] != "pending":
         return
     action = data.get("action")
@@ -208,6 +237,7 @@ def _handle_vote(game: dict, sid: str, users: list, data: dict) -> None:
 
 
 def _handle_next_round(game: dict, sid: str, users: list, data: dict) -> None:
+    """Advance a "this or that" game to a new round once both players are ready."""
     if game["type"] != "this_or_that" or game["status"] != "revealed":
         return
     ready = game.setdefault("ready_for_next", [])
@@ -228,6 +258,7 @@ def _handle_next_round(game: dict, sid: str, users: list, data: dict) -> None:
 
 
 def _handle_complete_turn(game: dict, sid: str, users: list, data: dict) -> None:
+    """Advance "truth or dare" to the next turn once both players confirm."""
     if game["type"] != "truth_or_dare" or game["status"] != "revealed":
         return
     voter_sid = game.get("voter_sid")
@@ -257,6 +288,7 @@ def _handle_complete_turn(game: dict, sid: str, users: list, data: dict) -> None
 
 
 def _handle_skip_question(game: dict, sid: str, users: list, data: dict) -> None:
+    """Reroll the current truth/dare prompt for the active voter."""
     if game["type"] != "truth_or_dare" or game["status"] != "revealed":
         return
     if sid != game.get("voter_sid"):
@@ -270,6 +302,7 @@ def _handle_skip_question(game: dict, sid: str, users: list, data: dict) -> None
 
 
 def _handle_reject_turn(game: dict, sid: str, users: list, data: dict) -> None:
+    """Undo the voter's readiness to advance, keeping the turn in review."""
     if game["type"] != "truth_or_dare" or game["status"] != "revealed":
         return
     voter_sid = game.get("voter_sid")

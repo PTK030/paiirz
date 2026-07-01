@@ -1,4 +1,4 @@
-import React from "react";
+import type React from "react";
 import { IoSend } from "react-icons/io5";
 
 interface SendButtonProps {
@@ -6,6 +6,7 @@ interface SendButtonProps {
   isStrangerInRoom: boolean;
 }
 
+/** @description Send button for the chat composer; disabled until a stranger is connected. */
 const SendButton: React.FC<SendButtonProps> = ({ sendMessage, isStrangerInRoom }) => {
   return (
     <button

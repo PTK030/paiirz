@@ -1,8 +1,10 @@
-import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import type React from "react";
 
 interface IcebreakerCardProps {
+  /** Id of the chat message this icebreaker game is attached to. */
   msgId: string;
+  /** Current server-authoritative state of the icebreaker game. */
   icebreaker: {
     type: "this_or_that" | "truth_or_dare";
     question: string;
@@ -16,7 +18,9 @@ interface IcebreakerCardProps {
     accepted_users?: string[];
     ready_for_next?: string[];
   };
+  /** Socket id of the current user, used to determine "my" vote/turn. */
   mySid: string;
+  /** Emits a game action (vote, turn completion, accept/decline invite, etc.) to the server. */
   onAction: (
     messageId: string,
     action: string | number,
@@ -28,10 +32,17 @@ interface IcebreakerCardProps {
       | "accept"
       | "decline"
       | "quit"
-      | "reject_turn",
+      | "reject_turn"
   ) => void;
 }
 
+/**
+ * @description Renders an inline icebreaker mini-game embedded in the chat
+ * (invite/accept flow, "this or that" voting, "truth or dare" turns) as a
+ * single stateless card driven entirely by the server-authoritative
+ * `icebreaker` state on the message; all interactions are relayed to the
+ * server via `onAction` rather than mutated locally.
+ */
 export const IcebreakerCard: React.FC<IcebreakerCardProps> = ({
   msgId,
   icebreaker,
@@ -112,9 +123,7 @@ export const IcebreakerCard: React.FC<IcebreakerCardProps> = ({
               transition={contentTransition}
               className="p-5 flex flex-col items-center text-center gap-5"
             >
-              <p className="text-sm font-medium text-zinc-200">
-                Rozmówca zaprosił Cię do gry.
-              </p>
+              <p className="text-sm font-medium text-zinc-200">Rozmówca zaprosił Cię do gry.</p>
               <div className="flex w-full gap-3">
                 <button
                   onClick={() => onAction(msgId, "", "accept")}
@@ -189,10 +198,7 @@ export const IcebreakerCard: React.FC<IcebreakerCardProps> = ({
   if (isThisOrThat) {
     const options = icebreaker.options || ["Tak", "Nie"];
     const myVote = icebreaker.votes[mySid];
-    const partnerVote =
-      partnerVoteKey !== undefined
-        ? icebreaker.votes[partnerVoteKey]
-        : undefined;
+    const partnerVote = partnerVoteKey !== undefined ? icebreaker.votes[partnerVoteKey] : undefined;
 
     const amIReady = readyForNext.includes(mySid);
     const isPartnerReady = readyForNext.some((sid) => sid !== mySid);
@@ -256,6 +262,7 @@ export const IcebreakerCard: React.FC<IcebreakerCardProps> = ({
               >
                 {options.map((opt, idx) => (
                   <button
+                    // eslint-disable-next-line react/no-array-index-key -- fixed option list for this message, never reordered
                     key={idx}
                     onClick={() => onAction(msgId, idx, "vote")}
                     className="w-full flex items-center justify-between px-5 py-3.5 bg-zinc-800/50 hover:bg-indigo-500/20 border border-zinc-700/50 hover:border-indigo-500/50 rounded-xl transition-all group active:scale-[0.98]"
@@ -311,6 +318,7 @@ export const IcebreakerCard: React.FC<IcebreakerCardProps> = ({
                   return (
                     <motion.div
                       layout
+                      // eslint-disable-next-line react/no-array-index-key -- fixed option list for this message, never reordered
                       key={idx}
                       className={`relative overflow-hidden rounded-xl border ${isMatch ? "bg-emerald-500/10 border-emerald-500/30" : isMyChoice ? "bg-indigo-500/10 border-indigo-500/30" : isPartnerChoice ? "bg-cyan-500/10 border-cyan-500/30" : "bg-zinc-800/30 border-zinc-800/50 opacity-50"}`}
                     >
@@ -353,11 +361,7 @@ export const IcebreakerCard: React.FC<IcebreakerCardProps> = ({
                   onClick={() => onAction(msgId, "", "next_round")}
                   className={`w-full py-3 rounded-xl font-semibold text-sm transition-all active:scale-[0.98] ${isPartnerReady ? "bg-indigo-500 text-white shadow-lg shadow-indigo-500/20 animate-pulse-soft" : "bg-zinc-800 hover:bg-zinc-700 text-zinc-300"}`}
                 >
-                  <span>
-                    {isPartnerReady
-                      ? "Obcy czeka! Następna runda"
-                      : "Następna runda"}
-                  </span>
+                  <span>{isPartnerReady ? "Obcy czeka! Następna runda" : "Następna runda"}</span>
                 </button>
               )}
             </motion.div>
@@ -481,7 +485,7 @@ export const IcebreakerCard: React.FC<IcebreakerCardProps> = ({
             <div className="bg-zinc-800/40 border border-zinc-700/50 rounded-xl p-6 relative">
               <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-1 bg-zinc-700 rounded-full" />
               <p className="text-base sm:text-lg font-bold text-white text-center italic leading-relaxed">
-                "{icebreaker.result}"
+                &quot;{icebreaker.result}&quot;
               </p>
             </div>
 
@@ -512,9 +516,7 @@ export const IcebreakerCard: React.FC<IcebreakerCardProps> = ({
               ) : (
                 <div className="flex items-center justify-center gap-2 text-xs font-semibold text-zinc-400 py-2">
                   <div className="w-1.5 h-1.5 rounded-full bg-zinc-500 animate-pulse shrink-0"></div>
-                  <span className="italic">
-                    Oczekiwanie na zgłoszenie wykonania...
-                  </span>
+                  <span className="italic">Oczekiwanie na zgłoszenie wykonania...</span>
                 </div>
               )
             ) : amIVoter ? (

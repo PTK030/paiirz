@@ -1,4 +1,5 @@
-import React, { KeyboardEvent } from "react";
+import type { KeyboardEvent } from "react";
+import type React from "react";
 
 interface InputProps {
   setMessage: (message: string) => void;
@@ -8,6 +9,7 @@ interface InputProps {
   isStrangerInRoom: boolean;
 }
 
+/** @description Text message composer input; disabled until a stranger is connected. Enter sends. */
 const Input: React.FC<InputProps> = ({
   setMessage,
   message,

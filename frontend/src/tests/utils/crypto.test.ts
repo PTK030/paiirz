@@ -1,4 +1,5 @@
 import { describe, it, expect } from "vitest";
+
 import {
   generateKeyPair,
   exportPublicKey,
@@ -132,7 +133,8 @@ describe("crypto utils", () => {
       const kp2 = await generateKeyPair();
       const sharedKey = await deriveSharedKey(kp1.privateKey, kp2.publicKey);
 
-      const fakeDataUri = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==";
+      const fakeDataUri =
+        "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==";
       const encrypted = await encryptBinary(sharedKey, fakeDataUri);
       const decrypted = await decryptBinary(sharedKey, encrypted);
       expect(decrypted).toBe(fakeDataUri);

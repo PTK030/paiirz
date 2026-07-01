@@ -21,10 +21,12 @@ Room schema:
         "notify_on_tab_leave": bool,
     }
 """
+
 import typing
 from typing import Optional
 
-# We use total=False so that private room fields are optional without requiring Python 3.11+ NotRequired
+
+# total=False: private room fields are optional without requiring Python 3.11+ NotRequired.
 class RoomData(typing.TypedDict, total=False):
     users: list[str]
     contacts: dict[str, Optional[str]]
@@ -33,6 +35,7 @@ class RoomData(typing.TypedDict, total=False):
     owner_sid: str
     no_screenshots: bool
     notify_on_tab_leave: bool
+
 
 class UserProfile(typing.TypedDict, total=False):
     peerId: Optional[str]
@@ -46,6 +49,7 @@ class UserProfile(typing.TypedDict, total=False):
     lat: Optional[float]
     lon: Optional[float]
     radius: Optional[int]
+
 
 # Active rooms keyed by room_id.
 rooms: dict[str, RoomData] = {}
