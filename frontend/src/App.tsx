@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Route, Routes, useLocation } from "react-router-dom";
+import { BrowserRouter as Router, Route, Routes, Navigate, useLocation } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
 import Home from "./pages/Home";
 import Chat from "./pages/Chat";
@@ -17,6 +17,7 @@ const AnimatedRoutes = () => {
         <Route path="/bezpieczenstwo" element={<Security />} />
         <Route path="/regulamin" element={<Terms />} />
         <Route path="/kontakt" element={<Contact />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </AnimatePresence>
   );

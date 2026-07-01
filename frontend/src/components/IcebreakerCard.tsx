@@ -18,9 +18,17 @@ interface IcebreakerCardProps {
   };
   mySid: string;
   onAction: (
-    messageId: string, 
-    action: string | number, 
-    actionType?: "vote" | "complete_turn" | "skip_question" | "next_round" | "accept" | "decline" | "quit"
+    messageId: string,
+    action: string | number,
+    actionType?:
+      | "vote"
+      | "complete_turn"
+      | "skip_question"
+      | "next_round"
+      | "accept"
+      | "decline"
+      | "quit"
+      | "reject_turn",
   ) => void;
 }
 
@@ -32,7 +40,7 @@ export const IcebreakerCard: React.FC<IcebreakerCardProps> = ({
 }) => {
   const votes = icebreaker.votes || {};
   const hasVoted = mySid in votes;
-  const partnerVoteKey = Object.keys(votes).find(k => k !== mySid);
+  const partnerVoteKey = Object.keys(votes).find((k) => k !== mySid);
   const isMyTurn = icebreaker.turn_sid === mySid;
   const currentRound = icebreaker.round || 1;
 
@@ -42,11 +50,11 @@ export const IcebreakerCard: React.FC<IcebreakerCardProps> = ({
   // Card transition settings
   const containerVariants = {
     hidden: { opacity: 0, y: 8 },
-    visible: { 
-      opacity: 1, 
+    visible: {
+      opacity: 1,
       y: 0,
-      transition: { duration: 0.15, ease: "easeOut" as const }
-    }
+      transition: { duration: 0.15, ease: "easeOut" as const },
+    },
   };
 
   const contentTransition = { duration: 0.15, ease: "easeOut" as const };
@@ -57,15 +65,17 @@ export const IcebreakerCard: React.FC<IcebreakerCardProps> = ({
     const gameName = isThisOrThat ? "TO CZY TO" : "PRAWDA CZY WYZWANIE";
 
     return (
-      <motion.div 
-        layout 
+      <motion.div
+        layout
         variants={containerVariants}
         initial="hidden"
         animate="visible"
         className="w-full max-w-sm bg-zinc-900/80 border border-zinc-800/80 rounded-2xl overflow-hidden backdrop-blur-md shadow-xl my-4 mx-auto"
       >
         <div className="flex items-center justify-between px-4 py-3 bg-zinc-800/50 border-b border-zinc-700/50">
-          <span className="text-xs font-bold text-zinc-300 tracking-wider uppercase">{gameName}</span>
+          <span className="text-xs font-bold text-zinc-300 tracking-wider uppercase">
+            {gameName}
+          </span>
           <button
             onClick={() => onAction(msgId, "", "quit")}
             className="text-zinc-500 hover:text-red-400 transition-colors w-6 h-6 flex items-center justify-center rounded-full hover:bg-zinc-800"
@@ -74,10 +84,10 @@ export const IcebreakerCard: React.FC<IcebreakerCardProps> = ({
             ✕
           </button>
         </div>
-        
+
         <AnimatePresence mode="wait">
           {isProposer ? (
-            <motion.div 
+            <motion.div
               key="proposer"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -89,12 +99,12 @@ export const IcebreakerCard: React.FC<IcebreakerCardProps> = ({
                 Wysłano zaproszenie do gry. Oczekiwanie na akceptację...
               </p>
               <div className="flex items-center gap-2 text-xs font-semibold text-indigo-400 bg-indigo-500/10 px-3 py-1.5 rounded-full">
-                <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse"></div>
+                <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse shrink-0"></div>
                 <span>Czekam na drugiego gracza</span>
               </div>
             </motion.div>
           ) : (
-            <motion.div 
+            <motion.div
               key="joiner"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -130,8 +140,8 @@ export const IcebreakerCard: React.FC<IcebreakerCardProps> = ({
   if (icebreaker.status === "declined") {
     const gameName = isThisOrThat ? "TO CZY TO" : "PRAWDA CZY WYZWANIE";
     return (
-      <motion.div 
-        layout 
+      <motion.div
+        layout
         variants={containerVariants}
         initial="hidden"
         animate="visible"
@@ -140,7 +150,7 @@ export const IcebreakerCard: React.FC<IcebreakerCardProps> = ({
         <div className="text-[10px] font-bold text-zinc-500 tracking-wider uppercase">
           <span>{gameName}</span>
         </div>
-        <motion.p 
+        <motion.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           className="text-xs text-zinc-500 italic"
@@ -155,8 +165,8 @@ export const IcebreakerCard: React.FC<IcebreakerCardProps> = ({
   if (icebreaker.status === "quit") {
     const gameName = isThisOrThat ? "TO CZY TO" : "PRAWDA CZY WYZWANIE";
     return (
-      <motion.div 
-        layout 
+      <motion.div
+        layout
         variants={containerVariants}
         initial="hidden"
         animate="visible"
@@ -165,7 +175,7 @@ export const IcebreakerCard: React.FC<IcebreakerCardProps> = ({
         <div className="text-[10px] font-bold text-zinc-500 tracking-wider uppercase">
           <span>{gameName}</span>
         </div>
-        <motion.p 
+        <motion.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           className="text-xs text-zinc-500 italic"
@@ -179,49 +189,52 @@ export const IcebreakerCard: React.FC<IcebreakerCardProps> = ({
   if (isThisOrThat) {
     const options = icebreaker.options || ["Tak", "Nie"];
     const myVote = icebreaker.votes[mySid];
-    const partnerVote = partnerVoteKey !== undefined ? icebreaker.votes[partnerVoteKey] : undefined;
+    const partnerVote =
+      partnerVoteKey !== undefined
+        ? icebreaker.votes[partnerVoteKey]
+        : undefined;
 
     const amIReady = readyForNext.includes(mySid);
-    const isPartnerReady = readyForNext.some(sid => sid !== mySid);
+    const isPartnerReady = readyForNext.some((sid) => sid !== mySid);
 
     return (
-      <motion.div 
-        layout 
+      <motion.div
+        layout
         variants={containerVariants}
         initial="hidden"
         animate="visible"
         className="w-full max-w-sm bg-zinc-900/90 border border-zinc-800/80 rounded-2xl overflow-hidden backdrop-blur-xl shadow-2xl my-4 mx-auto ring-1 ring-white/5"
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-3 bg-gradient-to-r from-indigo-500/10 to-transparent border-b border-indigo-500/20">
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-bold text-indigo-300 tracking-wider uppercase">To czy To</span>
-            <span className="text-[10px] bg-indigo-500/20 text-indigo-300 px-2 py-0.5 rounded-md font-bold">
+        <div className="flex items-start justify-between px-4 sm:px-5 py-3 bg-gradient-to-r from-indigo-500/10 to-transparent border-b border-indigo-500/20 gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs font-bold text-indigo-300 tracking-wider uppercase whitespace-nowrap">
+              To czy To
+            </span>
+            <span className="text-[10px] bg-indigo-500/20 text-indigo-300 px-2 py-0.5 rounded-md font-bold whitespace-nowrap">
               Runda {currentRound}
             </span>
-          </div>
-          <div className="flex items-center gap-3">
             {icebreaker.status === "revealed" && myVote === partnerVote && (
-              <motion.span 
+              <motion.span
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="text-[10px] font-extrabold text-emerald-400 tracking-wider bg-emerald-500/10 px-2 py-1 rounded"
+                className="text-[10px] font-extrabold text-emerald-400 tracking-wider bg-emerald-500/10 px-2 py-1 rounded whitespace-nowrap"
               >
                 ZGODNOŚĆ
               </motion.span>
             )}
-            <button
-              onClick={() => onAction(msgId, "", "quit")}
-              className="text-zinc-500 hover:text-red-400 transition-colors"
-              title="Wyjdź z gry"
-            >
-              ✕
-            </button>
           </div>
+          <button
+            onClick={() => onAction(msgId, "", "quit")}
+            className="text-zinc-500 hover:text-red-400 transition-colors shrink-0 mt-0.5"
+            title="Wyjdź z gry"
+          >
+            ✕
+          </button>
         </div>
 
         {/* Question */}
-        <motion.h3 
+        <motion.h3
           layout="position"
           className="text-lg font-bold text-white text-center py-6 px-4 bg-zinc-800/20 border-b border-zinc-800/40"
         >
@@ -233,7 +246,7 @@ export const IcebreakerCard: React.FC<IcebreakerCardProps> = ({
           {icebreaker.status === "pending" ? (
             !hasVoted ? (
               // User hasn't voted yet
-              <motion.div 
+              <motion.div
                 key="voting"
                 initial={{ opacity: 0, y: 5 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -247,14 +260,18 @@ export const IcebreakerCard: React.FC<IcebreakerCardProps> = ({
                     onClick={() => onAction(msgId, idx, "vote")}
                     className="w-full flex items-center justify-between px-5 py-3.5 bg-zinc-800/50 hover:bg-indigo-500/20 border border-zinc-700/50 hover:border-indigo-500/50 rounded-xl transition-all group active:scale-[0.98]"
                   >
-                    <span className="text-sm font-semibold text-zinc-200 group-hover:text-indigo-100">{opt}</span>
-                    <span className="text-xs font-bold text-zinc-500 group-hover:text-indigo-400 uppercase tracking-wider">Wybierz</span>
+                    <span className="text-sm font-semibold text-zinc-200 group-hover:text-indigo-100">
+                      {opt}
+                    </span>
+                    <span className="text-xs font-bold text-zinc-500 group-hover:text-indigo-400 uppercase tracking-wider">
+                      Wybierz
+                    </span>
                   </button>
                 ))}
               </motion.div>
             ) : (
               // User has voted, waiting for partner
-              <motion.div 
+              <motion.div
                 key="waiting"
                 initial={{ opacity: 0, y: 5 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -263,20 +280,22 @@ export const IcebreakerCard: React.FC<IcebreakerCardProps> = ({
                 className="p-6 flex flex-col items-center gap-5"
               >
                 <div className="flex flex-col items-center gap-1.5">
-                  <span className="text-xs text-zinc-500 uppercase tracking-wider font-bold">Twój wybór:</span>
+                  <span className="text-xs text-zinc-500 uppercase tracking-wider font-bold">
+                    Twój wybór:
+                  </span>
                   <span className="text-lg font-bold text-indigo-400">
                     {options[Number(myVote)]}
                   </span>
                 </div>
                 <div className="flex items-center gap-2 text-xs font-semibold text-zinc-400 bg-zinc-800/50 px-4 py-2 rounded-full">
-                  <div className="w-1.5 h-1.5 rounded-full bg-zinc-400 animate-pulse"></div>
+                  <div className="w-1.5 h-1.5 rounded-full bg-zinc-400 animate-pulse shrink-0"></div>
                   <span>Oczekiwanie na odpowiedź obcego</span>
                 </div>
               </motion.div>
             )
           ) : (
             // Revealed status
-            <motion.div 
+            <motion.div
               key="revealed"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -296,15 +315,23 @@ export const IcebreakerCard: React.FC<IcebreakerCardProps> = ({
                       className={`relative overflow-hidden rounded-xl border ${isMatch ? "bg-emerald-500/10 border-emerald-500/30" : isMyChoice ? "bg-indigo-500/10 border-indigo-500/30" : isPartnerChoice ? "bg-cyan-500/10 border-cyan-500/30" : "bg-zinc-800/30 border-zinc-800/50 opacity-50"}`}
                     >
                       <div className="px-4 py-3 flex items-center justify-between">
-                        <span className={`text-sm font-bold ${isMatch ? "text-emerald-300" : isMyChoice || isPartnerChoice ? "text-zinc-200" : "text-zinc-500"}`}>{opt}</span>
+                        <span
+                          className={`text-sm font-bold ${isMatch ? "text-emerald-300" : isMyChoice || isPartnerChoice ? "text-zinc-200" : "text-zinc-500"}`}
+                        >
+                          {opt}
+                        </span>
                         <div className="flex gap-1.5">
                           {isMyChoice && (
-                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${isMatch ? "bg-emerald-500/20 text-emerald-400" : "bg-indigo-500/20 text-indigo-400"}`}>
+                            <span
+                              className={`text-[10px] font-bold px-2 py-0.5 rounded ${isMatch ? "bg-emerald-500/20 text-emerald-400" : "bg-indigo-500/20 text-indigo-400"}`}
+                            >
                               TY
                             </span>
                           )}
                           {isPartnerChoice && (
-                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${isMatch ? "bg-emerald-500/20 text-emerald-400" : "bg-cyan-500/20 text-cyan-400"}`}>
+                            <span
+                              className={`text-[10px] font-bold px-2 py-0.5 rounded ${isMatch ? "bg-emerald-500/20 text-emerald-400" : "bg-cyan-500/20 text-cyan-400"}`}
+                            >
                               OBCY
                             </span>
                           )}
@@ -318,7 +345,7 @@ export const IcebreakerCard: React.FC<IcebreakerCardProps> = ({
               {/* Next Round Button with Dual Consent */}
               {amIReady ? (
                 <div className="flex items-center justify-center gap-2 text-xs font-semibold text-zinc-400 py-2">
-                  <div className="w-1.5 h-1.5 rounded-full bg-zinc-500 animate-pulse"></div>
+                  <div className="w-1.5 h-1.5 rounded-full bg-zinc-500 animate-pulse shrink-0"></div>
                   <span>Oczekiwanie na gotowość obcego (1/2)</span>
                 </div>
               ) : (
@@ -326,7 +353,11 @@ export const IcebreakerCard: React.FC<IcebreakerCardProps> = ({
                   onClick={() => onAction(msgId, "", "next_round")}
                   className={`w-full py-3 rounded-xl font-semibold text-sm transition-all active:scale-[0.98] ${isPartnerReady ? "bg-indigo-500 text-white shadow-lg shadow-indigo-500/20 animate-pulse-soft" : "bg-zinc-800 hover:bg-zinc-700 text-zinc-300"}`}
                 >
-                  <span>{isPartnerReady ? "Obcy czeka! Następna runda" : "Następna runda"}</span>
+                  <span>
+                    {isPartnerReady
+                      ? "Obcy czeka! Następna runda"
+                      : "Następna runda"}
+                  </span>
                 </button>
               )}
             </motion.div>
@@ -345,42 +376,44 @@ export const IcebreakerCard: React.FC<IcebreakerCardProps> = ({
   const amIVoter = voterSid === mySid;
 
   return (
-    <motion.div 
-      layout 
+    <motion.div
+      layout
       variants={containerVariants}
       initial="hidden"
       animate="visible"
       className="w-full max-w-sm bg-zinc-900/90 border border-zinc-800/80 rounded-2xl overflow-hidden backdrop-blur-xl shadow-2xl my-4 mx-auto ring-1 ring-white/5"
     >
       {/* Header */}
-      <div className="flex items-center justify-between px-5 py-3 bg-gradient-to-r from-rose-500/10 to-transparent border-b border-rose-500/20">
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-bold text-rose-300 tracking-wider uppercase">Prawda czy Wyzwanie</span>
-          <span className="text-[10px] bg-rose-500/20 text-rose-300 px-2 py-0.5 rounded-md font-bold">
+      <div className="flex items-start justify-between px-4 sm:px-5 py-3 bg-gradient-to-r from-rose-500/10 to-transparent border-b border-rose-500/20 gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-xs font-bold text-rose-300 tracking-wider uppercase whitespace-nowrap">
+            Prawda czy Wyzwanie
+          </span>
+          <span className="text-[10px] bg-rose-500/20 text-rose-300 px-2 py-0.5 rounded-md font-bold whitespace-nowrap">
             Runda {currentRound}
           </span>
-        </div>
-        <div className="flex items-center gap-3">
           {icebreaker.status === "pending" && (
-            <span className={`text-[10px] font-extrabold tracking-wider px-2 py-0.5 rounded ${isMyTurn ? "bg-indigo-500/20 text-indigo-400" : "bg-zinc-800 text-zinc-400"}`}>
+            <span
+              className={`text-[10px] font-extrabold tracking-wider px-2 py-0.5 rounded whitespace-nowrap ${isMyTurn ? "bg-indigo-500/20 text-indigo-400" : "bg-zinc-800 text-zinc-400"}`}
+            >
               {isMyTurn ? "TWÓJ RUCH" : "RUCH OBCEGO"}
             </span>
           )}
-          <button
-            onClick={() => onAction(msgId, "", "quit")}
-            className="text-zinc-500 hover:text-red-400 transition-colors"
-            title="Wyjdź z gry"
-          >
-            ✕
-          </button>
         </div>
+        <button
+          onClick={() => onAction(msgId, "", "quit")}
+          className="text-zinc-500 hover:text-red-400 transition-colors shrink-0 mt-0.5"
+          title="Wyjdź z gry"
+        >
+          ✕
+        </button>
       </div>
 
       <AnimatePresence mode="wait">
         {icebreaker.status === "pending" ? (
           isMyTurn ? (
             // My turn to choose
-            <motion.div 
+            <motion.div
               key="choose"
               initial={{ opacity: 0, y: 5 }}
               animate={{ opacity: 1, y: 0 }}
@@ -408,7 +441,7 @@ export const IcebreakerCard: React.FC<IcebreakerCardProps> = ({
             </motion.div>
           ) : (
             // Partner's turn to choose
-            <motion.div 
+            <motion.div
               key="partner-choose"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -417,7 +450,7 @@ export const IcebreakerCard: React.FC<IcebreakerCardProps> = ({
               className="p-8 flex flex-col items-center justify-center gap-4"
             >
               <div className="flex items-center gap-3 bg-zinc-800/30 px-5 py-3 rounded-full border border-zinc-800/50">
-                <div className="w-2 h-2 rounded-full bg-indigo-400 animate-ping"></div>
+                <div className="w-2 h-2 rounded-full bg-indigo-400 animate-ping shrink-0"></div>
                 <span className="text-sm font-medium text-zinc-400">
                   Obcy wybiera pomiędzy Prawdą a Wyzwaniem...
                 </span>
@@ -426,7 +459,7 @@ export const IcebreakerCard: React.FC<IcebreakerCardProps> = ({
           )
         ) : (
           // Revealed status
-          <motion.div 
+          <motion.div
             key="revealed-td"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -437,7 +470,9 @@ export const IcebreakerCard: React.FC<IcebreakerCardProps> = ({
               <span className="text-[10px] uppercase tracking-wider font-bold text-zinc-500">
                 {voterLabel}
               </span>
-              <span className={`text-xl font-black uppercase tracking-widest ${icebreaker.question === "Prawda" ? "text-emerald-400" : "text-rose-400"}`}>
+              <span
+                className={`text-xl font-black uppercase tracking-widest ${icebreaker.question === "Prawda" ? "text-emerald-400" : "text-rose-400"}`}
+              >
                 {icebreaker.question === "Prawda" ? "Prawda" : "Wyzwanie"}
               </span>
             </div>
@@ -450,21 +485,20 @@ export const IcebreakerCard: React.FC<IcebreakerCardProps> = ({
               </p>
             </div>
 
-            {/* Dual Consent Complete Turn Action */}
+            {/* Peer confirmation flow for Truth or Dare */}
             {!isVoterReady ? (
-              // Voter hasn't clicked "Wykonane" yet
               amIVoter ? (
                 <div className="flex flex-col gap-3">
                   <p className="text-xs text-center text-zinc-400 mb-1">
-                    Odpowiedz na czacie, a następnie prześlij turę dalej:
+                    Odpowiedz na czacie i wyślij do potwierdzenia rozmówcy:
                   </p>
                   <div className="flex gap-2">
                     <button
                       onClick={() => onAction(msgId, "", "complete_turn")}
                       className="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold py-3 rounded-xl transition-colors shadow-lg shadow-indigo-500/20 active:scale-[0.98]"
-                      title="Przekaż turę"
+                      title="Wyślij do potwierdzenia"
                     >
-                      <span>Wykonane</span>
+                      <span>Wyślij do potwierdzenia</span>
                     </button>
                     <button
                       onClick={() => onAction(msgId, "", "skip_question")}
@@ -477,30 +511,37 @@ export const IcebreakerCard: React.FC<IcebreakerCardProps> = ({
                 </div>
               ) : (
                 <div className="flex items-center justify-center gap-2 text-xs font-semibold text-zinc-400 py-2">
-                  <div className="w-1.5 h-1.5 rounded-full bg-zinc-500 animate-pulse"></div>
-                  <span className="italic">Oczekiwanie na ruch obcego...</span>
+                  <div className="w-1.5 h-1.5 rounded-full bg-zinc-500 animate-pulse shrink-0"></div>
+                  <span className="italic">
+                    Oczekiwanie na zgłoszenie wykonania...
+                  </span>
                 </div>
               )
+            ) : amIVoter ? (
+              <div className="flex items-center justify-center gap-2 text-xs font-semibold text-zinc-400 py-2">
+                <div className="w-1.5 h-1.5 rounded-full bg-zinc-500 animate-pulse shrink-0"></div>
+                <span>Oczekiwanie na potwierdzenie obcego...</span>
+              </div>
             ) : (
-              // Voter clicked "Wykonane", waiting for partner to agree to transition
-              amIVoter ? (
-                <div className="flex items-center justify-center gap-2 text-xs font-semibold text-zinc-400 py-2">
-                  <div className="w-1.5 h-1.5 rounded-full bg-zinc-500 animate-pulse"></div>
-                  <span>Oczekiwanie aż obcy przejdzie dalej (1/2)</span>
-                </div>
-              ) : (
-                <div className="flex flex-col gap-3">
-                  <p className="text-xs text-center text-zinc-400 mb-1">
-                    Obcy zakończył turę. Przejdź do kolejnego kroku:
-                  </p>
+              <div className="flex flex-col gap-3">
+                <p className="text-xs text-center text-zinc-400 mb-1">
+                  Obcy oznaczył wykonanie. Potwierdzasz?
+                </p>
+                <div className="flex gap-2">
                   <button
                     onClick={() => onAction(msgId, "", "complete_turn")}
-                    className="w-full bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold py-3 rounded-xl transition-colors shadow-lg shadow-indigo-500/20 active:scale-[0.98]"
+                    className="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold py-3 rounded-xl transition-colors shadow-lg shadow-indigo-500/20 active:scale-[0.98]"
                   >
-                    <span>Następna tura</span>
+                    <span>Potwierdzam</span>
+                  </button>
+                  <button
+                    onClick={() => onAction(msgId, "", "reject_turn")}
+                    className="px-4 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-bold py-3 rounded-xl transition-colors border border-zinc-700 active:scale-[0.98]"
+                  >
+                    <span>Nie wykonane</span>
                   </button>
                 </div>
-              )
+              </div>
             )}
           </motion.div>
         )}

@@ -13,7 +13,7 @@ const Security = () => {
               Bezpieczeństwo &amp; Prywatność
             </h1>
             <p className="text-sm text-zinc-400 leading-relaxed">
-              Projektując komunikator paiirz, postawiliśmy bezpieczeństwo i całkowitą anonimowość na pierwszym miejscu. Każda rozmowa jest szyfrowana end-to-end — nawet my nie możemy jej odczytać.
+              Projektując komunikator paiirz, postawiliśmy bezpieczeństwo i całkowitą anonimowość na pierwszym miejscu. Każda rozmowa jest szyfrowana end-to-end - nawet my nie możemy jej odczytać.
             </p>
           </div>
 
@@ -28,10 +28,10 @@ const Security = () => {
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                 </svg>
-                <h3 className="text-sm font-semibold text-zinc-100">Szyfrowanie End-to-End (E2EE) — ECDH + AES-GCM 256</h3>
+                <h3 className="text-sm font-semibold text-zinc-100">Szyfrowanie End-to-End (E2EE) - ECDH + AES-GCM 256</h3>
               </div>
               <p className="text-xs text-zinc-400 leading-relaxed">
-                Każda sesja czatu jest zabezpieczona szyfrowaniem end-to-end zbudowanym na kryptografii krzywych eliptycznych (ECDH P-256). Zaraz po sparowaniu, obie przeglądarki generują unikalne pary kluczy. Klucz prywatny <span className="text-zinc-300 font-medium">nigdy nie opuszcza Twojego urządzenia</span> — przez serwer przechodzi jedynie klucz publiczny. Na jego podstawie obie strony niezależnie wyprowadzają <span className="text-zinc-300 font-medium">ten sam tajny klucz AES-GCM 256-bit</span> (poprzez HKDF), którym szyfrowane są wiadomości, zdjęcia, nagrania głosowe i wideo. Każda wiadomość korzysta z unikalnego, losowego wektora IV. Serwer paiirz widzi wyłącznie zaszyfrowany szum — jest całkowicie ślepy na treść konwersacji.
+                Każda sesja czatu jest zabezpieczona szyfrowaniem end-to-end zbudowanym na kryptografii krzywych eliptycznych (ECDH P-256). Zaraz po sparowaniu, obie przeglądarki generują unikalne pary kluczy. Klucz prywatny <span className="text-zinc-300 font-medium">nigdy nie opuszcza Twojego urządzenia</span> - przez serwer przechodzi jedynie klucz publiczny. Na jego podstawie obie strony niezależnie wyprowadzają <span className="text-zinc-300 font-medium">ten sam tajny klucz AES-GCM 256-bit</span> (poprzez HKDF), którym szyfrowane są wiadomości, zdjęcia, nagrania głosowe i wideo. Każda wiadomość korzysta z unikalnego, losowego wektora IV. Serwer paiirz widzi wyłącznie zaszyfrowany szum - jest całkowicie ślepy na treść konwersacji.
               </p>
             </Card>
 
@@ -44,7 +44,7 @@ const Security = () => {
                 <h3 className="text-sm font-semibold text-zinc-100">Zero-Knowledge: adresy IP haszowane SHA-256 z solą</h3>
               </div>
               <p className="text-xs text-zinc-400 leading-relaxed">
-                Serwer paiirz <span className="text-zinc-300 font-medium">nigdy nie przechowuje surowego adresu IP</span> użytkownika. Przy każdym połączeniu adres IP i Peer ID są natychmiast haszowane algorytmem SHA-256 z unikalną, losową <em>solą kryptograficzną</em> generowaną w RAM przy każdym uruchomieniu serwera. Nawet przejęcie serwera przez atakującego nie ujawniłoby żadnego prawdziwego adresu IP. Hashe są używane wyłącznie do mechanizmu blokowania spamerów — i tylko w ulotnej pamięci operacyjnej.
+                Serwer paiirz <span className="text-zinc-300 font-medium">nigdy nie przechowuje surowego adresu IP</span> użytkownika. Przy każdym połączeniu adres IP i Peer ID są natychmiast haszowane algorytmem SHA-256 z unikalną, losową <em>solą kryptograficzną</em> generowaną w RAM przy każdym uruchomieniu serwera. Nawet przejęcie serwera przez atakującego nie ujawniłoby żadnego prawdziwego adresu IP. Hashe są używane wyłącznie do mechanizmu blokowania spamerów - i tylko w ulotnej pamięci operacyjnej.
               </p>
             </Card>
 
@@ -54,10 +54,10 @@ const Security = () => {
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                 </svg>
-                <h3 className="text-sm font-semibold text-zinc-100">Architektura P2P — rozmowy głosowe i wideo omijają serwer</h3>
+                <h3 className="text-sm font-semibold text-zinc-100">Architektura P2P - rozmowy głosowe i wideo omijają serwer</h3>
               </div>
               <p className="text-xs text-zinc-400 leading-relaxed">
-                Połączenia głosowe i wideo realizowane są w technologii WebRTC bezpośrednio między Twoim urządzeniem a urządzeniem rozmówcy, bez pośrednictwa serwera paiirz. Strumień mediów jest dodatkowo szyfrowany protokołem DTLS-SRTP (wymóg standardu WebRTC). Serwer pełni jedynie rolę <em>ślepego przekaźnika sygnalizacji</em> (SDP, ICE) — nie ma dostępu do treści rozmowy.
+                Połączenia głosowe i wideo realizowane są w technologii WebRTC bezpośrednio między Twoim urządzeniem a urządzeniem rozmówcy, bez pośrednictwa serwera paiirz. Strumień mediów jest dodatkowo szyfrowany protokołem DTLS-SRTP (wymóg standardu WebRTC). Serwer pełni jedynie rolę <em>ślepego przekaźnika sygnalizacji</em> (SDP, ICE) - nie ma dostępu do treści rozmowy.
               </p>
             </Card>
 
@@ -67,10 +67,10 @@ const Security = () => {
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                 </svg>
-                <h3 className="text-sm font-semibold text-zinc-100">Zerowe logowanie — brak historii konwersacji</h3>
+                <h3 className="text-sm font-semibold text-zinc-100">Zerowe logowanie - brak historii konwersacji</h3>
               </div>
               <p className="text-xs text-zinc-400 leading-relaxed">
-                Serwer paiirz nie zapisuje treści żadnej wiadomości na dysku. Przekazywany przez serwer szyfrogramm (ciphertext) istnieje jedynie w ulotnej pamięci RAM przez ułamek sekundy, niezbędny do przekazania go do odbiorcy. Po zakończeniu sesji lub zamknięciu karty, cała historia konwersacji jest trwale kasowana bez możliwości odtworzenia — po stronie zarówno serwera, jak i przeglądarki.
+                Serwer paiirz nie zapisuje treści żadnej wiadomości na dysku. Przekazywany przez serwer szyfrogramm (ciphertext) istnieje jedynie w ulotnej pamięci RAM przez ułamek sekundy, niezbędny do przekazania go do odbiorcy. Po zakończeniu sesji lub zamknięciu karty, cała historia konwersacji jest trwale kasowana bez możliwości odtworzenia - po stronie zarówno serwera, jak i przeglądarki.
               </p>
             </Card>
 
@@ -83,7 +83,7 @@ const Security = () => {
                 <h3 className="text-sm font-semibold text-zinc-100">Ochrona przed nadużyciami i ograniczanie spamu</h3>
               </div>
               <p className="text-xs text-zinc-400 leading-relaxed">
-                System antynandużyciowy oparty jest wyłącznie na anonimowych hashach identyfikatorów — bez dostępu do prawdziwych danych użytkownika. Możesz zgłosić i zablokować dowolnego rozmówcę jednym kliknięciem. Mechanizm rate-limiting chroni przed zalewaniem wiadomościami (max 5 wiadomości na 3 sekundy). Blokada trwała uniemożliwia ponowne sparowanie z daną osobą w oparciu o hash Peer ID.
+                System antynandużyciowy oparty jest wyłącznie na anonimowych hashach identyfikatorów - bez dostępu do prawdziwych danych użytkownika. Możesz zgłosić i zablokować dowolnego rozmówcę jednym kliknięciem. Mechanizm rate-limiting chroni przed zalewaniem wiadomościami (max 5 wiadomości na 3 sekundy). Blokada trwała uniemożliwia ponowne sparowanie z daną osobą w oparciu o hash Peer ID.
               </p>
             </Card>
 
@@ -125,7 +125,7 @@ const Security = () => {
                     <td className="text-center py-2 pl-4 text-rose-500">✗ (Meta przechowuje i analizuje)</td>
                   </tr>
                   <tr>
-                    <td className="py-2 pr-4">Anonimowość — brak konta / rejestracji</td>
+                    <td className="py-2 pr-4">Anonimowość - brak konta / rejestracji</td>
                     <td className="text-center py-2 px-4 text-emerald-400 font-bold">✓ W pełni anonimowy</td>
                     <td className="text-center py-2 pl-4 text-rose-500">✗ Wymagane konto FB</td>
                   </tr>
@@ -148,7 +148,7 @@ const Security = () => {
               </table>
             </div>
             <p className="text-xs text-zinc-600 leading-relaxed mt-4">
-              * Powyższe porównanie dotyczy standardowych rozmów Messenger. Facebook/Meta potwierdził, że od 2023 roku stopniowo wdraża E2EE domyślnie dla prywatnych czatów — jednak nadal wymaga konta, loguje metadane i przetwarza dane na potrzeby reklam. W paiirz żadne z tych działań nie zachodzi.
+              * Powyższe porównanie dotyczy standardowych rozmów Messenger. Facebook/Meta potwierdził, że od 2023 roku stopniowo wdraża E2EE domyślnie dla prywatnych czatów - jednak nadal wymaga konta, loguje metadane i przetwarza dane na potrzeby reklam. W paiirz żadne z tych działań nie zachodzi.
             </p>
           </Card>
 

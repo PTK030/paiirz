@@ -3,61 +3,105 @@
 @tailwind utilities;
 
 @layer base {
-  html, body {
-    @apply font-sans antialiased bg-[#09090B] text-zinc-100;
-    text-rendering: optimizeLegibility;
-    overflow: hidden;
-    height: 100%;
-    margin: 0;
-    padding: 0;
-  }
+    html,
+    body {
+        @apply font-sans antialiased bg-[#09090B] text-zinc-100;
+        text-rendering: optimizeLegibility;
+        overflow: hidden;
+        height: 100%;
+        margin: 0;
+        padding: 0;
+    }
 
-  #root {
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-  }
+    #root {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
 
-  .scroll-container {
-    overflow-y: auto;
-    scrollbar-gutter: stable;
-  }
+    .scroll-container {
+        overflow-y: auto;
+        scrollbar-gutter: stable;
+    }
 
-  /* Custom selection highlight like Vercel */
-  ::selection {
-    background-color: rgba(255, 255, 255, 0.95);
-    color: #09090B;
-  }
+    /* Custom selection highlight like Vercel */
+    ::selection {
+        background-color: rgba(255, 255, 255, 0.95);
+        color: #09090b;
+    }
 
-  /* Sleek, thin custom scrollbars */
-  ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-  }
-  ::-webkit-scrollbar-track {
-    background: transparent;
-  }
-  ::-webkit-scrollbar-thumb {
-    background: #27272A;
-    border-radius: 9999px;
-  }
-  ::-webkit-scrollbar-thumb:hover {
-    background: #3F3F46;
-  }
+    /* Sleek, thin custom scrollbars */
+    ::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+        background: #27272a;
+        border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+        background: #3f3f46;
+    }
 }
 
 @keyframes subtle-ripple {
-  0% {
-    transform: scale(0.95);
-    opacity: 0.35;
-  }
-  100% {
-    transform: scale(2.2);
-    opacity: 0;
-  }
+    0% {
+        transform: scale(0.95);
+        opacity: 0.35;
+    }
+    100% {
+        transform: scale(2.2);
+        opacity: 0;
+    }
 }
 
 .animate-subtle-ripple {
-  animation: subtle-ripple 2.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) infinite;
-  will-change: transform, opacity;
+    animation: subtle-ripple 2.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) infinite;
+    will-change: transform, opacity;
+}
+
+@keyframes brand-premium-sheen {
+    0% {
+        background-position: 130% 50%;
+    }
+    100% {
+        background-position: -30% 50%;
+    }
+}
+
+@keyframes brand-premium-breathe {
+    0%,
+    100% {
+        opacity: 0.56;
+    }
+    50% {
+        opacity: 1;
+    }
+}
+
+.brand-logo-premium-base {
+    color: rgba(244, 244, 245, 0.66);
+}
+
+.brand-logo-premium-fill {
+    color: transparent;
+    background-image: linear-gradient(
+        112deg,
+        rgba(255, 255, 255, 0.04) 0%,
+        rgba(255, 255, 255, 0.92) 38%,
+        rgba(199, 210, 254, 0.98) 52%,
+        rgba(255, 255, 255, 0.92) 66%,
+        rgba(255, 255, 255, 0.06) 100%
+    );
+    background-size: 180% 100%;
+    background-repeat: no-repeat;
+    -webkit-background-clip: text;
+    background-clip: text;
+    animation:
+        brand-premium-sheen 5.8s linear infinite,
+        brand-premium-breathe 4.6s ease-in-out infinite;
+    will-change: background-position, opacity;
 }

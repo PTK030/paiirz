@@ -1,5 +1,5 @@
 /**
- * E2EE Crypto Utility — paiirz
+ * E2EE Crypto Utility - paiirz
  *
  * Implements End-to-End Encryption using:
  *   - ECDH (Elliptic Curve Diffie-Hellman) on P-256 for key agreement
@@ -14,11 +14,18 @@
  * The server is a BLIND RELAY for public keys and ciphertexts.
  */
 
+// ─── HKDF Parameters ─────────────────────────────────────────────────────────
+// Changing these values will break compatibility with existing sessions.
+
+const HKDF_SALT = "paiirz-e2ee-salt-v1";
+const HKDF_INFO = "paiirz-chat-key";
+
+
 // ─── Key Generation ──────────────────────────────────────────────────────────
 
 /**
  * Generate an ECDH key pair using the P-256 (secp256r1) curve.
- * The private key is non-extractable — it cannot be serialised or leaked.
+ * The private key is non-extractable - it cannot be serialised or leaked.
  */
 export async function generateKeyPair(): Promise<CryptoKeyPair> {
   return crypto.subtle.generateKey(
@@ -87,8 +94,8 @@ export async function deriveSharedKey(
     {
       name: "HKDF",
       hash: "SHA-256",
-      salt: encoder.encode("paiirz-e2ee-salt-v1"),
-      info: encoder.encode("paiirz-chat-key"),
+      salt: encoder.encode(HKDF_SALT),
+      info: encoder.encode(HKDF_INFO),
     },
     keyMaterial,
     { name: "AES-GCM", length: 256 },
@@ -102,7 +109,7 @@ export async function deriveSharedKey(
 export interface EncryptedPayload {
   /** Base64-encoded AES-GCM ciphertext (includes 16-byte auth tag) */
   ct: string;
-  /** Base64-encoded 12-byte random IV (nonce) — unique per message */
+  /** Base64-encoded 12-byte random IV (nonce) - unique per message */
   iv: string;
 }
 
@@ -123,13 +130,13 @@ export async function encrypt(
   );
   return {
     ct: arrayBufferToBase64(ciphertext),
-    iv: arrayBufferToBase64(iv),
+    iv: arrayBufferToBase64(iv.buffer),
   };
 }
 
 /**
  * Decrypt an AES-GCM-256 ciphertext.
- * The authentication tag is automatically verified — any tampering throws an error.
+ * The authentication tag is automatically verified - any tampering throws an error.
  */
 export async function decrypt(
   sharedKey: CryptoKey,

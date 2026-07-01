@@ -29,7 +29,7 @@ export const CustomVideoPlayer: React.FC<CustomVideoPlayerProps> = ({
   const [duration, setDuration] = useState(0);
   const [isMuted, setIsMuted] = useState(false);
   const [volume, setVolume] = useState(1);
-  const [_showControls, setShowControls] = useState(true);
+  const [, setShowControls] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
   const controlsTimeoutRef = useRef<number | null>(null);

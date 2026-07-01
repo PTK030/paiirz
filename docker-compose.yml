@@ -1,15 +1,14 @@
-version: '3.8'
+version: "3.8"
 
 services:
   backend:
     build: ./backend
     ports:
       - "5000:5000"
-    environment:
-      - PORT=5000
-      - SECRET_KEY=dockersecret12345
-      - FLASK_DEBUG=True
-      - CORS_ALLOWED_ORIGINS=*
+    env_file:
+      - ./backend/.env
+    # Mount source for hot-reload in development.
+    # Remove this volume block before deploying to production.
     volumes:
       - ./backend:/app
 

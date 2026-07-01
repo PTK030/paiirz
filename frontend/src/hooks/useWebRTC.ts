@@ -176,9 +176,10 @@ export function useWebRTC(
         isInitiatorRef.current = true;
         setCallState("calling");
         sendSignal({ type: "call-request", callType: type });
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error("WebRTC startCall error:", err);
-        alert(`Brak dostępu do urządzeń multimedialnych. Szczegóły: ${err?.message || err?.name || err}`);
+        const detail = err instanceof Error ? err.message : String(err);
+        alert(`Brak dostępu do urządzeń multimedialnych. Szczegóły: ${detail}`);
       }
     },
     [socket, room, sendSignal]
@@ -202,9 +203,10 @@ export function useWebRTC(
       pcRef.current = pc;
       addLocalTracks(pc, stream);
       sendSignal({ type: "call-accept" });
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("WebRTC acceptCall error:", err);
-      alert(`Brak dostępu do urządzeń multimedialnych. Szczegóły: ${err?.message || err?.name || err}`);
+      const detail = err instanceof Error ? err.message : String(err);
+      alert(`Brak dostępu do urządzeń multimedialnych. Szczegóły: ${detail}`);
       declineCall();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
