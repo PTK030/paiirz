@@ -148,10 +148,6 @@ black --check app
 - **Hashed IP Addresses** — IP addresses are hashed with a random salt before being stored in process memory and are never logged in plain text.
 - **Media Safelisting** — Images, videos, and audio are accepted exclusively as valid `data:` URIs matching the expected MIME types.
 
-## License
-
-Distributed under the MIT License. See `LICENSE` for more information.
-
 ## Contact
 
 Questions and reports: Please use the contact form within the application (`/contact`).
