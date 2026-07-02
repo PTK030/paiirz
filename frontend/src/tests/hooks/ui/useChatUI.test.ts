@@ -1,7 +1,7 @@
 import { renderHook, act } from "@testing-library/react";
 import { describe, it, expect, vi } from "vitest";
 
-import { useChatUI } from "../../hooks/useChatUI";
+import { useChatUI } from "../../../hooks/ui/useChatUI";
 
 /** Builds a DOM element belonging (or not) to one of the menu containers. */
 function clickOn(className: string | null) {
@@ -48,6 +48,24 @@ describe("useChatUI", () => {
 
     act(() => clickOn(null));
     expect(result.current.gamesMenuOpen).toBe(false);
+  });
+
+  it("closes the contact menu when clicking outside its container", () => {
+    const { result } = renderHook(() => useChatUI());
+    act(() => result.current.setContactMenuOpen(true));
+    expect(result.current.contactMenuOpen).toBe(true);
+
+    act(() => clickOn(null));
+    expect(result.current.contactMenuOpen).toBe(false);
+  });
+
+  it("closes the actions menu when clicking outside its container", () => {
+    const { result } = renderHook(() => useChatUI());
+    act(() => result.current.setActionsMenuOpen(true));
+    expect(result.current.actionsMenuOpen).toBe(true);
+
+    act(() => clickOn(null));
+    expect(result.current.actionsMenuOpen).toBe(false);
   });
 
   it("keeps a menu open when clicking inside its own container", () => {

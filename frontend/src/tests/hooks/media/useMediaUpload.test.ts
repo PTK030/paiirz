@@ -1,7 +1,11 @@
 import { renderHook, act, waitFor } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-import { useMediaUpload, MAX_IMAGE_SIZE_BYTES, MAX_VIDEO_SIZE_BYTES } from "../../hooks/useMediaUpload";
+import {
+  useMediaUpload,
+  MAX_IMAGE_SIZE_BYTES,
+  MAX_VIDEO_SIZE_BYTES,
+} from "../../../hooks/media/useMediaUpload";
 
 function fileOfSize(name: string, type: string, size: number): File {
   return new File([new Uint8Array(size)], name, { type });
@@ -15,6 +19,16 @@ function pickEvent(file: File | undefined) {
     writable: false,
   });
   return { target: input } as unknown as React.ChangeEvent<HTMLInputElement>;
+}
+
+/** Fires `reader.onerror`, satisfying the `ProgressEvent<FileReader>` type FileReader expects. */
+function fireReaderError(reader: FileReader) {
+  reader.onerror?.(new ProgressEvent("error") as unknown as ProgressEvent<FileReader>);
+}
+
+/** Fires `reader.onload`, satisfying the `ProgressEvent<FileReader>` type FileReader expects. */
+function fireReaderLoad(reader: FileReader) {
+  reader.onload?.(new ProgressEvent("load") as unknown as ProgressEvent<FileReader>);
 }
 
 describe("useMediaUpload", () => {
@@ -58,7 +72,9 @@ describe("useMediaUpload", () => {
   it("rejects a non-image file for the image picker", async () => {
     const { result } = renderHook(() => useMediaUpload());
     await act(async () => {
-      await result.current.handleImagePicked(pickEvent(fileOfSize("doc.pdf", "application/pdf", 1024)));
+      await result.current.handleImagePicked(
+        pickEvent(fileOfSize("doc.pdf", "application/pdf", 1024))
+      );
     });
     expect(result.current.selectedImage).toBeNull();
   });
@@ -87,6 +103,78 @@ describe("useMediaUpload", () => {
     expect(alert).toHaveBeenCalledWith(expect.stringContaining("za duże"));
   });
 
+  it("rejects a non-video file for the video picker", async () => {
+    const { result } = renderHook(() => useMediaUpload());
+    await act(async () => {
+      await result.current.handleVideoPicked(
+        pickEvent(fileOfSize("doc.pdf", "application/pdf", 1024))
+      );
+    });
+    expect(result.current.selectedVideo).toBeNull();
+  });
+
+  it("silently ignores a FileReader failure while picking an image", async () => {
+    const originalReadAsDataURL = FileReader.prototype.readAsDataURL;
+    FileReader.prototype.readAsDataURL = function (this: FileReader) {
+      fireReaderError(this);
+    };
+    const { result } = renderHook(() => useMediaUpload());
+
+    await act(async () => {
+      await result.current.handleImagePicked(pickEvent(fileOfSize("photo.png", "image/png", 1024)));
+    });
+
+    expect(result.current.selectedImage).toBeNull();
+    FileReader.prototype.readAsDataURL = originalReadAsDataURL;
+  });
+
+  it("silently ignores a FileReader failure while picking a video", async () => {
+    const originalReadAsDataURL = FileReader.prototype.readAsDataURL;
+    FileReader.prototype.readAsDataURL = function (this: FileReader) {
+      fireReaderError(this);
+    };
+    const { result } = renderHook(() => useMediaUpload());
+
+    await act(async () => {
+      await result.current.handleVideoPicked(pickEvent(fileOfSize("clip.mp4", "video/mp4", 1024)));
+    });
+
+    expect(result.current.selectedVideo).toBeNull();
+    FileReader.prototype.readAsDataURL = originalReadAsDataURL;
+  });
+
+  it("falls back to an empty string when FileReader resolves with no result (image)", async () => {
+    const originalReadAsDataURL = FileReader.prototype.readAsDataURL;
+    FileReader.prototype.readAsDataURL = function (this: FileReader) {
+      Object.defineProperty(this, "result", { value: null, configurable: true });
+      fireReaderLoad(this);
+    };
+    const { result } = renderHook(() => useMediaUpload());
+
+    await act(async () => {
+      await result.current.handleImagePicked(pickEvent(fileOfSize("photo.png", "image/png", 1024)));
+    });
+
+    expect(result.current.selectedImage).toBe("");
+    FileReader.prototype.readAsDataURL = originalReadAsDataURL;
+  });
+
+  it("falls back to an empty string when FileReader resolves with no result (video)", async () => {
+    const originalReadAsDataURL = FileReader.prototype.readAsDataURL;
+    FileReader.prototype.readAsDataURL = function (this: FileReader) {
+      Object.defineProperty(this, "result", { value: null, configurable: true });
+      fireReaderLoad(this);
+    };
+    const { result } = renderHook(() => useMediaUpload());
+
+    await act(async () => {
+      await result.current.handleVideoPicked(pickEvent(fileOfSize("clip.mp4", "video/mp4", 1024)));
+    });
+
+    expect(result.current.selectedVideo).toBe("");
+    FileReader.prototype.readAsDataURL = originalReadAsDataURL;
+  });
+
   it("does nothing when no file is selected", async () => {
     const { result } = renderHook(() => useMediaUpload());
     await act(async () => {
@@ -95,12 +183,23 @@ describe("useMediaUpload", () => {
     expect(result.current.selectedImage).toBeNull();
   });
 
-  it("invokes onMediaPicked after a successful pick", async () => {
+  it("invokes onMediaPicked after a successful image pick", async () => {
     const onMediaPicked = vi.fn();
     const { result } = renderHook(() => useMediaUpload(onMediaPicked));
 
     await act(async () => {
       await result.current.handleImagePicked(pickEvent(fileOfSize("photo.png", "image/png", 1024)));
+    });
+
+    await waitFor(() => expect(onMediaPicked).toHaveBeenCalledTimes(1));
+  });
+
+  it("invokes onMediaPicked after a successful video pick", async () => {
+    const onMediaPicked = vi.fn();
+    const { result } = renderHook(() => useMediaUpload(onMediaPicked));
+
+    await act(async () => {
+      await result.current.handleVideoPicked(pickEvent(fileOfSize("clip.mp4", "video/mp4", 1024)));
     });
 
     await waitFor(() => expect(onMediaPicked).toHaveBeenCalledTimes(1));

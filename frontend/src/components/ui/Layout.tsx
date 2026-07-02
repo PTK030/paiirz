@@ -43,7 +43,9 @@ export const Layout: React.FC<LayoutProps> = ({
         {!hideHeader && <Header showBackLink={showBackLink} maxWidthClass={maxWidthClass} />}
 
         <main
-          className={`flex-1 min-h-0 w-full mx-auto flex flex-col relative z-10 ${fullScreen ? "max-w-none" : `${maxWidthClass} mt-8 sm:mt-16 mb-16`}`}
+          className={`flex-1 w-full mx-auto flex flex-col relative z-10 ${
+            fullScreen ? "min-h-0 max-w-none" : `${maxWidthClass} mt-8 sm:mt-16 mb-16`
+          }`}
         >
           {children}
         </main>

@@ -1,7 +1,7 @@
 import { renderHook, waitFor, act } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
-import { useLocationAutocomplete } from "../../hooks/useLocationAutocomplete";
+import { useLocationAutocomplete } from "../../../hooks/ui/useLocationAutocomplete";
 
 function mockNominatimResponse(results: unknown[]) {
   return {
@@ -101,6 +101,43 @@ describe("useLocationAutocomplete", () => {
     );
 
     const { result } = renderHook(() => useLocationAutocomplete("xyz"));
+    await advance(300);
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(result.current.suggestions).toEqual([]);
+  });
+
+  it("skips a result with no address block at all", async () => {
+    vi.mocked(fetch).mockResolvedValue(
+      mockNominatimResponse([{ place_id: 1, lat: "1", lon: "1" }])
+    );
+
+    const { result } = renderHook(() => useLocationAutocomplete("xyz"));
+    await advance(300);
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(result.current.suggestions).toEqual([]);
+  });
+
+  it("defaults the voivodeship to an empty string when Nominatim omits it", async () => {
+    vi.mocked(fetch).mockResolvedValue(
+      mockNominatimResponse([
+        { place_id: 1, lat: "50.06", lon: "19.94", address: { city: "Kraków" } },
+      ])
+    );
+
+    const { result } = renderHook(() => useLocationAutocomplete("krak"));
+    await advance(300);
+    await waitFor(() => expect(result.current.suggestions).toHaveLength(1));
+    expect(result.current.suggestions[0].state).toBe("");
+  });
+
+  it("clears suggestions and stops loading on a non-2xx Nominatim response", async () => {
+    vi.mocked(fetch).mockResolvedValue({
+      ok: false,
+      status: 503,
+      json: () => Promise.resolve([]),
+    } as Response);
+
+    const { result } = renderHook(() => useLocationAutocomplete("wa"));
     await advance(300);
     await waitFor(() => expect(result.current.isLoading).toBe(false));
     expect(result.current.suggestions).toEqual([]);

@@ -5,6 +5,7 @@ ever having access to the ECDH shared secret, plaintext, or media streams.
 """
 
 import logging
+from typing import Optional
 
 from flask import request
 from flask_socketio import SocketIO, emit
@@ -63,5 +64,6 @@ def _on_webrtc_signal(data: dict) -> None:
     )
 
 
-def _room_exists(room_id) -> bool:
+def _room_exists(room_id: Optional[str]) -> bool:
+    """Return whether room_id is a non-empty id present in global state."""
     return bool(room_id and room_id in rooms)

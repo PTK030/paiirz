@@ -78,6 +78,8 @@ export const webRtcSignalSchema = z.object({
     callType: z.enum(["voice", "video"]).optional(),
     sdp: z.custom<RTCSessionDescriptionInit>().optional(),
     candidate: z.custom<RTCIceCandidateInit>().optional(),
+    /** Present for mic-mute and video-mute signals. */
+    muted: z.boolean().optional(),
   }),
 });
 

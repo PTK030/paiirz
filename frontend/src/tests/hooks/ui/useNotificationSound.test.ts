@@ -1,10 +1,10 @@
 import { renderHook, act } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-import { useNotificationSound } from "../../hooks/useNotificationSound";
-import { playNotificationSound } from "../../utils/sound";
+import { useNotificationSound } from "../../../hooks/ui/useNotificationSound";
+import { playNotificationSound } from "../../../utils/sound";
 
-vi.mock("../../utils/sound", () => ({
+vi.mock("../../../utils/sound", () => ({
   playNotificationSound: vi.fn(),
 }));
 

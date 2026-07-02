@@ -17,11 +17,14 @@ export const DualRangeSlider: React.FC<DualRangeSliderProps> = ({ min, max, valu
   const [minVal, setMinVal] = useState(value[0] || min);
   const [maxVal, setMaxVal] = useState(value[1] || max);
 
+  const val0 = value[0];
+  const val1 = value[1];
+
   // Update local state if props change (e.g., from reset)
   useEffect(() => {
-    setMinVal(value[0] || min);
-    setMaxVal(value[1] || max);
-  }, [value[0], value[1], min, max]);
+    setMinVal(val0 || min);
+    setMaxVal(val1 || max);
+  }, [val0, val1, min, max]);
 
   const handleMinChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newVal = Math.min(Number(e.target.value), maxVal - 1);

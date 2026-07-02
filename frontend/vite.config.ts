@@ -13,11 +13,12 @@ export default defineConfig({
       reporter: ["text", "json", "html"],
       include: ["src/utils/**", "src/hooks/**"],
       exclude: [
-        "src/hooks/useWebRTC.ts",
-        "src/hooks/useContactExchange.ts",
-        "src/hooks/useE2EE.ts",
-        "src/hooks/usePreferences.ts",
-        "src/hooks/useRecording.ts",
+        // Impractical to unit test: real WebRTC/MediaRecorder/WebCrypto session
+        // state that would require mocking the entire browser media stack for
+        // negligible verification value. Exercised instead via manual/e2e testing.
+        "src/hooks/media/useWebRTC.ts",
+        "src/hooks/media/useE2EE.ts",
+        "src/hooks/media/useRecording.ts",
         "node_modules/**",
         "src/tests/**",
       ],

@@ -40,6 +40,7 @@ export interface Message {
 export interface SessionStats {
   startTime: number | null;
   endTime: number | null;
+  disconnectedBy: "me" | "stranger" | "blocked" | null;
   sentTextCount: number;
   sentImageCount: number;
   sentAudioCount: number;
@@ -52,6 +53,7 @@ export interface SessionStats {
 export const INITIAL_SESSION_STATS: SessionStats = {
   startTime: null,
   endTime: null,
+  disconnectedBy: null,
   sentTextCount: 0,
   sentImageCount: 0,
   sentAudioCount: 0,

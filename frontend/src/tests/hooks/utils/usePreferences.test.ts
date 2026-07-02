@@ -1,7 +1,7 @@
 import { renderHook, act } from "@testing-library/react";
 import { describe, it, expect, beforeEach, vi } from "vitest";
 
-import { usePreferences } from "../../hooks/usePreferences";
+import { usePreferences } from "../../../hooks/utils/usePreferences";
 
 describe("usePreferences", () => {
   beforeEach(() => {

@@ -11,17 +11,17 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import type React from "react";
 
 // ── Sub-components ────────────────────────────────────────────────────────────
-import { CallControls } from "../components/chat/CallControls";
-import { ChatHeader } from "../components/chat/ChatHeader";
-import ChatWrapper from "../components/chat/ChatWrapper";
-import { ConversationTopBar } from "../components/chat/ConversationTopBar";
-import { IncomingCallBanner } from "../components/chat/IncomingCallBanner";
-import { MediaLightbox } from "../components/chat/MediaLightbox";
-import { MediaPreviewPanel } from "../components/chat/MediaPreviewPanel";
-import { MessageInputBar } from "../components/chat/MessageInputBar";
-import { SearchingScreen } from "../components/chat/SearchingScreen";
-import { SessionSummary } from "../components/chat/SessionSummary";
-import { SetupPanel } from "../components/chat/SetupPanel";
+import { SearchingScreen } from "../components/chat/features/SearchingScreen";
+import { SessionSummary } from "../components/chat/features/SessionSummary";
+import { SetupPanel } from "../components/chat/features/SetupPanel";
+import { MessageInputBar } from "../components/chat/input/MessageInputBar";
+import { ChatHeader } from "../components/chat/layout/ChatHeader";
+import ChatWrapper from "../components/chat/layout/ChatWrapper";
+import { ConversationTopBar } from "../components/chat/layout/ConversationTopBar";
+import { IncomingCallBanner } from "../components/chat/layout/IncomingCallBanner";
+import { CallControls } from "../components/chat/media/CallControls";
+import { MediaLightbox } from "../components/chat/media/MediaLightbox";
+import { MediaPreviewPanel } from "../components/chat/media/MediaPreviewPanel";
 import { Layout } from "../components/ui/Layout";
 // ── Constants, custom hooks, socket schemas & utils ───────────────────────────
 import {
@@ -30,20 +30,20 @@ import {
   GEOLOCATION_TIMEOUT_MS,
   GEOLOCATION_MAX_AGE_MS,
 } from "../constants";
-import { useChatMessages } from "../hooks/useChatMessages";
-import { useChatUI } from "../hooks/useChatUI";
-import { useContactExchange } from "../hooks/useContactExchange";
-import { useE2EE } from "../hooks/useE2EE";
-import { useMediaUpload } from "../hooks/useMediaUpload";
-import { useNotificationSound } from "../hooks/useNotificationSound";
-import { usePreferences } from "../hooks/usePreferences";
-import { usePrivateRoom } from "../hooks/usePrivateRoom";
-import { useRecording } from "../hooks/useRecording";
-import { useRoom } from "../hooks/useRoom";
-import { useSessionStats } from "../hooks/useSessionStats";
-import { useSocket } from "../hooks/useSocket";
-import { useTitleNotification } from "../hooks/useTitleNotification";
-import { useWebRTC } from "../hooks/useWebRTC";
+import { useChatMessages } from "../hooks/core/useChatMessages";
+import { usePrivateRoom } from "../hooks/core/usePrivateRoom";
+import { useRoom } from "../hooks/core/useRoom";
+import { useSessionStats } from "../hooks/core/useSessionStats";
+import { useSocket } from "../hooks/core/useSocket";
+import { useE2EE } from "../hooks/media/useE2EE";
+import { useMediaUpload } from "../hooks/media/useMediaUpload";
+import { useRecording } from "../hooks/media/useRecording";
+import { useWebRTC } from "../hooks/media/useWebRTC";
+import { useChatUI } from "../hooks/ui/useChatUI";
+import { useContactExchange } from "../hooks/ui/useContactExchange";
+import { useNotificationSound } from "../hooks/ui/useNotificationSound";
+import { useTitleNotification } from "../hooks/ui/useTitleNotification";
+import { usePreferences } from "../hooks/utils/usePreferences";
 import {
   vanishToggledSchema,
   screenshotSchema,
@@ -134,6 +134,15 @@ const Chat: React.FC = () => {
     setShowSummary(false);
     setVanishModeActive(false);
     stopRecording(false);
+    // Deliberately narrow deps: `media`, `chatUI`, and `stopRecording` are
+    // whole hook-return objects/callbacks that aren't guaranteed referentially
+    // stable across renders, and the setState setters (`setIsStrangerTyping`,
+    // `setBlockedTimeLeft`, etc.) are stable by React's own guarantee - listing
+    // them would just make this callback (and everything that depends on it,
+    // like `useRoom`'s `onBeforeJoin`) recreate on every render for no
+    // behavioral benefit, since it should only ever run in response to an
+    // explicit "start a new session" action, not because some unrelated
+    // render happened.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [resetExchangeState, resetStats]);
 
@@ -200,6 +209,7 @@ const Chat: React.FC = () => {
     incomingCallType,
     isMicMuted,
     isVideoMuted,
+    isRemoteMicMuted,
     localVideoRef,
     remoteVideoRef,
     startCall,
@@ -216,6 +226,11 @@ const Chat: React.FC = () => {
     chatMessages
       .sendAudioMessage(e2ee.sharedKeyRef.current, room.room, recordedAudio, vanishModeActive)
       .then(clearRecordedAudio);
+    // Deliberately fires only on `recordedAudio` changing (i.e. exactly once
+    // per finished recording) - `room.room`/`vanishModeActive` are read as
+    // current values at send time, not tracked as retrigger conditions, since
+    // re-sending the same clip whenever the room or vanish toggle happens to
+    // change would duplicate messages.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [recordedAudio]);
 
@@ -231,8 +246,12 @@ const Chat: React.FC = () => {
     if (room.isStrangerInRoom) {
       startSession();
     } else {
-      endSession();
+      endSession(room.disconnectReason);
     }
+    // `startSession`/`endSession` should fire exactly once per
+    // isStrangerInRoom transition (entering/leaving a live conversation),
+    // not on every render where their own identities happen to change -
+    // they're intentionally excluded from deps for that reason.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [room.isStrangerInRoom]);
 
@@ -397,6 +416,12 @@ const Chat: React.FC = () => {
       socket.off("contact_exchanged", validatedOnContactExchanged);
       socket.off("partner_tab_hidden", validatedOnPartnerTabHidden);
     };
+    // Deliberately depends on `socket` alone (same pattern as the equivalent
+    // effects in useRoom/useChatMessages): the handlers close over
+    // `chatMessages`/`play`/etc., which aren't stable references, but
+    // re-subscribing every time any of them changes identity would mean
+    // needlessly detaching and reattaching these listeners on nearly every
+    // render instead of once per socket connection.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [socket]);
 
@@ -576,8 +601,6 @@ const Chat: React.FC = () => {
       {/* ── Top bar ──────────────────────────────────────────────────────────── */}
       <ChatHeader
         userCount={room.userCount}
-        isStrangerInRoom={room.isStrangerInRoom}
-        e2eReady={e2ee.e2eReady}
         soundsEnabled={soundsEnabled}
         onToggleSounds={() => setSoundsEnabled(!soundsEnabled)}
       />
@@ -683,6 +706,7 @@ const Chat: React.FC = () => {
                   callType={callType}
                   isMicMuted={isMicMuted}
                   isVideoMuted={isVideoMuted}
+                  isRemoteMicMuted={isRemoteMicMuted}
                   localVideoRef={localVideoRef}
                   remoteVideoRef={remoteVideoRef}
                   onToggleMic={toggleMic}

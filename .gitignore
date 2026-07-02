@@ -3,9 +3,12 @@
 Thumbs.db
 ehthumbs.db
 
-# IDEs and editors
+# IDEs, editors, and AI tools
 .vscode/
 .idea/
+.claude/
+.gemini/
+.cursor/
 *.sublime-project
 *.sublime-workspace
 *.swp

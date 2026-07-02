@@ -1,7 +1,7 @@
 import { renderHook, act } from "@testing-library/react";
 import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
 
-import { useSessionStats } from "../../hooks/useSessionStats";
+import { useSessionStats } from "../../../hooks/core/useSessionStats";
 
 describe("useSessionStats", () => {
   beforeEach(() => {
