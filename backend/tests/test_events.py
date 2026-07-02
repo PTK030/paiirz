@@ -205,7 +205,12 @@ class TestMessage:
 
         evt = _find(client2.get_received(), "message")
         assert evt is not None
-        assert _get_data(evt)["message"] == "hello"
+        payload = _get_data(evt)
+        assert payload["message"] == "hello"
+        assert "image" not in payload
+        assert "video" not in payload
+        assert "audio" not in payload
+        assert "e2e" not in payload
 
     def test_message_without_room_is_ignored(self, client, client2):
         _join_pair(client, client2)
@@ -228,7 +233,7 @@ class TestMessage:
         client.get_received()
         client2.get_received()
 
-        oversized = "x" * (9 * 1024 * 1024 + 1)
+        oversized = "x" * (18 * 1024 * 1024 + 1)
         client.emit("message", {"room": room_id, "image": oversized})
         assert _find(client2.get_received(), "message") is None
 
@@ -237,7 +242,7 @@ class TestMessage:
         client.get_received()
         client2.get_received()
 
-        oversized = "x" * (24 * 1024 * 1024 + 1)
+        oversized = "x" * (46 * 1024 * 1024 + 1)
         client.emit("message", {"room": room_id, "video": oversized})
         assert _find(client2.get_received(), "message") is None
 
@@ -485,6 +490,20 @@ class TestWebRTCSignal:
         client.emit("webrtc_signal", {"room": "ghost", "signal": {}})
         assert client.is_connected()
 
+    def test_call_hangup_is_forwarded_to_partner(self, client, client2):
+        room_id = _join_pair(client, client2)
+        client.get_received()
+        client2.get_received()
+
+        client.emit(
+            "webrtc_signal",
+            {"room": room_id, "signal": {"type": "call-hangup"}},
+        )
+
+        evt = _find(client2.get_received(), "webrtc_signal")
+        assert evt is not None
+        assert _get_data(evt)["signal"]["type"] == "call-hangup"
+
 
 # ---------------------------------------------------------------------------
 # Private rooms
@@ -598,6 +617,8 @@ class TestIcebreakerThisOrThat:
         data = _get_data(evt)
         assert data["sid"] == "system"
         assert data["icebreaker"]["type"] == "this_or_that"
+        assert "result" not in data["icebreaker"]
+        assert "voter_sid" not in data["icebreaker"]
 
     def test_trigger_with_custom_question(self, client, client2):
         room_id = _join_pair(client, client2)
@@ -616,7 +637,12 @@ class TestIcebreakerThisOrThat:
             },
         )
         evt = _find(client.get_received(), "message")
-        assert _get_data(evt)["icebreaker"]["question"] == "Pies czy kot?"
+        icebreaker = _get_data(evt)["icebreaker"]
+        assert icebreaker["question"] == "Pies czy kot?"
+        assert len(icebreaker["options"]) == 2
+        assert icebreaker["options"][0].startswith("Pies")
+        assert icebreaker["options"][1].startswith("Kot")
+        assert icebreaker["is_custom"] is True
 
     def test_invalid_game_type_is_ignored(self, client, client2):
         room_id = _join_pair(client, client2)
@@ -907,6 +933,15 @@ class TestIcebreakerTruthOrDare:
         game = state.rooms[room_id]["active_games"][game_id]
         assert game["is_custom"] is True
         assert game["result"] == "Custom question?"
+
+        client2.emit(
+            "action_icebreaker",
+            {"room": room_id, "messageId": game_id, "actionType": "accept"},
+        )
+        evt = _find(client2.get_received(), "icebreaker_updated")
+        icebreaker = _get_data(evt)["icebreaker"]
+        assert icebreaker["status"] == "revealed"
+        assert icebreaker["result"] == "Custom question?"
 
     def test_vote_truth_reveals_question(self, client, client2):
         room_id = _join_pair(client, client2)

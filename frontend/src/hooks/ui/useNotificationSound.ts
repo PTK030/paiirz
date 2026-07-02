@@ -1,6 +1,13 @@
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useCallback } from "react";
 
-import { playNotificationSound, type SoundType } from "../../utils/sound";
+import {
+  playNotificationSound,
+  startNotificationLoop,
+  stopNotificationLoop,
+  unlockSoundEngine,
+  type LoopSoundType,
+  type SoundType,
+} from "../../utils/sound";
 import { useLocalStorage } from "../utils/useLocalStorage";
 
 export interface UseNotificationSoundReturn {
@@ -8,6 +15,8 @@ export interface UseNotificationSoundReturn {
   setSoundsEnabled: (v: boolean) => void;
   /** Play a notification sound if sounds are enabled. */
   play: (type: SoundType) => void;
+  startLoop: (type: LoopSoundType) => void;
+  stopLoop: (type?: LoopSoundType) => void;
 }
 
 /**
@@ -26,9 +35,37 @@ export function useNotificationSound(): UseNotificationSoundReturn {
     soundsEnabledRef.current = soundsEnabled;
   }, [soundsEnabled]);
 
-  const play = (type: SoundType) => {
+  const play = useCallback((type: SoundType) => {
     playNotificationSound(type, soundsEnabledRef.current);
-  };
+  }, []);
 
-  return { soundsEnabled, setSoundsEnabled, play };
+  const startLoop = useCallback((type: LoopSoundType) => {
+    startNotificationLoop(type, soundsEnabledRef.current);
+  }, []);
+
+  const stopLoop = useCallback((type?: LoopSoundType) => {
+    stopNotificationLoop(type);
+  }, []);
+
+  useEffect(() => {
+    if (!soundsEnabled) stopNotificationLoop();
+  }, [soundsEnabled]);
+
+  useEffect(() => {
+    const unlock = () => {
+      unlockSoundEngine();
+      window.removeEventListener("pointerdown", unlock);
+      window.removeEventListener("keydown", unlock);
+    };
+    window.addEventListener("pointerdown", unlock, { once: true });
+    window.addEventListener("keydown", unlock, { once: true });
+    return () => {
+      window.removeEventListener("pointerdown", unlock);
+      window.removeEventListener("keydown", unlock);
+    };
+  }, []);
+
+  useEffect(() => () => stopNotificationLoop(), []);
+
+  return { soundsEnabled, setSoundsEnabled, play, startLoop, stopLoop };
 }

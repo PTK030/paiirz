@@ -17,6 +17,7 @@ interface IcebreakerCardProps {
     turn_sid?: string;
     accepted_users?: string[];
     ready_for_next?: string[];
+    is_custom?: boolean;
   };
   /** Socket id of the current user, used to determine "my" vote/turn. */
   mySid: string;
@@ -34,6 +35,29 @@ interface IcebreakerCardProps {
       | "quit"
       | "reject_turn"
   ) => void;
+}
+
+function CustomGamePreview({ text, options }: { text: string; options?: string[] }) {
+  return (
+    <div className="w-full rounded-xl border border-indigo-500/20 bg-indigo-500/10 px-4 py-3 text-left">
+      <span className="block text-[10px] font-bold uppercase tracking-wider text-indigo-400">
+        Własna treść
+      </span>
+      <p className="mt-1 text-sm font-semibold text-zinc-100">{text}</p>
+      {options && (
+        <div className="mt-2 flex flex-wrap gap-2">
+          {options.map((option) => (
+            <span
+              key={option}
+              className="rounded-md bg-zinc-950/40 px-2 py-1 text-xs text-zinc-300"
+            >
+              {option}
+            </span>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 }
 
 /**
@@ -81,6 +105,7 @@ export const IcebreakerCard: React.FC<IcebreakerCardProps> = ({
     // `proposer_sid` field to check against.
     const isProposer = icebreaker.accepted_users?.includes(mySid);
     const gameName = isThisOrThat ? "TO CZY TO" : "PRAWDA CZY WYZWANIE";
+    const customPreview = isThisOrThat ? icebreaker.question : icebreaker.result;
 
     return (
       <motion.div
@@ -113,6 +138,12 @@ export const IcebreakerCard: React.FC<IcebreakerCardProps> = ({
               transition={contentTransition}
               className="p-5 flex flex-col items-center text-center gap-4"
             >
+              {icebreaker.is_custom && customPreview && (
+                <CustomGamePreview
+                  text={customPreview}
+                  options={isThisOrThat ? icebreaker.options : undefined}
+                />
+              )}
               <p className="text-sm text-zinc-400">
                 Wysłano zaproszenie do gry. Oczekiwanie na akceptację...
               </p>
@@ -130,6 +161,12 @@ export const IcebreakerCard: React.FC<IcebreakerCardProps> = ({
               transition={contentTransition}
               className="p-5 flex flex-col items-center text-center gap-5"
             >
+              {icebreaker.is_custom && customPreview && (
+                <CustomGamePreview
+                  text={customPreview}
+                  options={isThisOrThat ? icebreaker.options : undefined}
+                />
+              )}
               <p className="text-sm font-medium text-zinc-200">Rozmówca zaprosił Cię do gry.</p>
               <div className="flex w-full gap-3">
                 <button

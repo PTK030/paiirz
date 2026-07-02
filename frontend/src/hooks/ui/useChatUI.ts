@@ -31,7 +31,15 @@ export function useChatUI(): UseChatUIReturn {
       const target = e.target as HTMLElement;
       if (contactMenuOpen && !target.closest(".contact-exchange-container"))
         setContactMenuOpen(false);
-      if (gamesMenuOpen && !target.closest(".games-menu-container")) setGamesMenuOpen(false);
+      // GamesMenu is mounted inside the actions-menu root. The click that
+      // opens it therefore belongs to the same interaction boundary and must
+      // not immediately be interpreted as an outside click.
+      if (
+        gamesMenuOpen &&
+        !target.closest(".games-menu-container") &&
+        !target.closest(".actions-menu-container")
+      )
+        setGamesMenuOpen(false);
       if (actionsMenuOpen && !target.closest(".actions-menu-container")) setActionsMenuOpen(false);
     };
     document.addEventListener("click", handleClick);

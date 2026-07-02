@@ -227,5 +227,28 @@ describe("useSessionStats", () => {
         "Ciekawa pogawędka. Może kolejny obcy będzie jeszcze lepszy?"
       );
     });
+
+    it("returns blocked message when disconnectedBy is 'blocked'", () => {
+      vi.setSystemTime(1000);
+      const { result } = renderHook(() => useSessionStats());
+      act(() => result.current.startSession());
+      act(() => result.current.incrementSent({ text: 2 }));
+      vi.setSystemTime(31000);
+      act(() => result.current.endSession("blocked"));
+      expect(result.current.derived.getDynamicFeedback()).toBe(
+        "Rozmówca został zablokowany. Bezpieczeństwo przede wszystkim!"
+      );
+    });
+
+    it("returns 'Zakończyłeś rozmowę' for short session ended by me with no received messages", () => {
+      vi.setSystemTime(1000);
+      const { result } = renderHook(() => useSessionStats());
+      act(() => result.current.startSession());
+      vi.setSystemTime(11000); // 10 s (< 15 s)
+      act(() => result.current.endSession("me"));
+      expect(result.current.derived.getDynamicFeedback()).toBe(
+        "Zakończyłeś rozmowę, zanim się zaczęła."
+      );
+    });
   });
 });

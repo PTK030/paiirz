@@ -27,6 +27,9 @@ export interface UseWebRTCReturn {
   startCall: (type: CallType) => Promise<void>;
   acceptCall: () => Promise<void>;
   declineCall: () => void;
+  /** Notifies the remote peer and then tears down the local call. */
+  hangUp: () => void;
+  /** Local teardown used when the room or transport has already ended. */
   endCall: () => void;
   toggleMic: () => void;
   toggleCamera: () => Promise<void>;
@@ -213,6 +216,7 @@ export function useWebRTC(socket: Socket | null, room: string | null): UseWebRTC
         setLocalStream(stream);
         setCallType(type);
         setIsVideoMuted(type === "voice");
+        setIsRemoteVideoMuted(type === "voice");
         isInitiatorRef.current = true;
         setCallState("calling");
         sendSignal({ type: "call-request", callType: type });
@@ -225,6 +229,12 @@ export function useWebRTC(socket: Socket | null, room: string | null): UseWebRTC
     [socket, room, sendSignal]
   );
 
+  /** @description Signals a decline to the peer and tears down any local call state. */
+  const declineCall = useCallback(() => {
+    sendSignal({ type: "call-decline" });
+    endCall();
+  }, [sendSignal, endCall]);
+
   /** @description Accepts an incoming call: grabs local media, creates the peer connection, and signals acceptance. */
   const acceptCall = useCallback(async () => {
     if (!incomingCallType) return;
@@ -235,6 +245,7 @@ export function useWebRTC(socket: Socket | null, room: string | null): UseWebRTC
       setLocalStream(stream);
       setCallType(type);
       setIsVideoMuted(type === "voice");
+      setIsRemoteVideoMuted(type === "voice");
       setCallState("connected");
 
       const pc = createPeerConnection((remoteMedia) => {
@@ -250,14 +261,17 @@ export function useWebRTC(socket: Socket | null, room: string | null): UseWebRTC
       alert(`Brak dostępu do urządzeń multimedialnych. Szczegóły: ${detail}`);
       declineCall();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [incomingCallType, createPeerConnection, sendSignal]);
+  }, [incomingCallType, createPeerConnection, sendSignal, declineCall]);
 
-  /** @description Signals a decline to the peer and tears down any local call state. */
-  const declineCall = useCallback(() => {
-    sendSignal({ type: "call-decline" });
+  /**
+   * Ends an established call from the UI. Unlike `endCall`, this public user
+   * action must notify the peer before local signaling/media state is erased.
+   */
+  const hangUp = useCallback(() => {
+    if (callState === "idle") return;
+    sendSignal({ type: "call-hangup" });
     endCall();
-  }, [sendSignal, endCall]);
+  }, [callState, sendSignal, endCall]);
 
   /**
    * @description Mutes/unmutes the local microphone track in place (no
@@ -442,6 +456,7 @@ export function useWebRTC(socket: Socket | null, room: string | null): UseWebRTC
     startCall,
     acceptCall,
     declineCall,
+    hangUp,
     endCall,
     toggleMic,
     toggleCamera,

@@ -21,9 +21,10 @@ from ..data.state import (
 
 logger = logging.getLogger(__name__)
 
-# Byte limits are ~5% above raw sizes to account for AES-GCM ciphertext overhead.
-_MAX_IMAGE_BYTES = 9 * 1024 * 1024
-_MAX_VIDEO_BYTES = 24 * 1024 * 1024
+# Byte limits must account for double base64 encoding (~1.77x overhead)
+# (data URI base64 + AES ciphertext base64) to match the frontend's 10MB/25MB raw limits.
+_MAX_IMAGE_BYTES = 18 * 1024 * 1024
+_MAX_VIDEO_BYTES = 46 * 1024 * 1024
 _MAX_CONTACT_CHARS = 1000
 # Encrypted text is base64 ciphertext, comfortably larger than the plaintext -
 # this rejects abusive payloads while leaving generous room for real messages.
@@ -81,22 +82,19 @@ def _on_message(data: dict) -> None:
         )
         return
 
-    emit(
-        "message",
-        {
-            "id": data.get("id"),
-            "sid": sid,
-            "message": message,
-            "image": image,
-            "audio": audio,
-            "video": video,
-            "vanishing": data.get("vanishing"),
-            "viewOnce": data.get("viewOnce"),
-            "e2e": data.get("e2e"),
-            "reactions": {},
-        },
-        to=room_id,
-    )
+    payload = {
+        "id": data.get("id"),
+        "sid": sid,
+        "message": message,
+        "image": image,
+        "audio": audio,
+        "video": video,
+        "vanishing": data.get("vanishing"),
+        "viewOnce": data.get("viewOnce"),
+        "e2e": data.get("e2e"),
+        "reactions": {},
+    }
+    emit("message", {key: value for key, value in payload.items() if value is not None}, to=room_id)
 
 
 def _on_message_reaction(data: dict) -> None:

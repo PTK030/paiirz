@@ -1,4 +1,5 @@
-import { renderHook, act, waitFor } from "@testing-library/react";
+import { waitFor } from "@testing-library/dom";
+import { renderHook, act } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 import { useSocket } from "../../../hooks/core/useSocket";
@@ -84,8 +85,9 @@ describe("useSocket", () => {
   it("reconnects with a new socket when the URL changes", async () => {
     // Create a second fake socket for the second connection
     const secondFake = makeFakeSocket();
-    io.mockImplementationOnce(() => currentFakeSocket.socket)
-      .mockImplementationOnce(() => secondFake.socket);
+    io.mockImplementationOnce(() => currentFakeSocket.socket).mockImplementationOnce(
+      () => secondFake.socket
+    );
 
     const { rerender } = renderHook(({ url }) => useSocket(url), {
       initialProps: { url: "http://localhost:5000" },

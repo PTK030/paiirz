@@ -6,13 +6,14 @@ export interface IcebreakerData {
   question: string;
   options?: string[];
   votes: Record<string, string | number>;
-  status: "pending" | "revealed" | "proposed" | "declined";
+  status: "pending" | "revealed" | "proposed" | "declined" | "quit";
   result?: string;
   voter_sid?: string;
   round?: number;
   turn_sid?: string;
   accepted_users?: string[];
   ready_for_next?: string[];
+  is_custom?: boolean;
 }
 
 // ─── Message ──────────────────────────────────────────────────────────────────
@@ -29,9 +30,18 @@ export interface Message {
   viewOnce?: boolean;
   reactions: Record<string, string>;
   isUnsent?: boolean;
-  /** E2EE envelope - present on incoming wire messages */
-  e2e?: { iv: string };
+  /** E2EE envelope - each encrypted field needs its own unique AES-GCM IV. */
+  e2e?: MessageE2EE;
   icebreaker?: IcebreakerData;
+}
+
+export interface MessageE2EE {
+  /** Legacy single-field envelope, accepted during rolling client upgrades. */
+  iv?: string;
+  messageIv?: string;
+  imageIv?: string;
+  videoIv?: string;
+  audioIv?: string;
 }
 
 // ─── Session Stats ────────────────────────────────────────────────────────────

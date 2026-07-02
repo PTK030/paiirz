@@ -1,6 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-import { playNotificationSound } from "../../utils/sound";
+import {
+  disposeSoundEngine,
+  playNotificationSound,
+  startNotificationLoop,
+  stopNotificationLoop,
+} from "../../utils/sound";
 
 describe("playNotificationSound", () => {
   let mockCtx: {
@@ -10,6 +15,7 @@ describe("playNotificationSound", () => {
     currentTime: number;
     state: string;
     close: ReturnType<typeof vi.fn>;
+    resume: ReturnType<typeof vi.fn>;
   };
   let mockOsc: {
     type: string;
@@ -30,6 +36,7 @@ describe("playNotificationSound", () => {
   };
 
   beforeEach(() => {
+    disposeSoundEngine();
     mockOsc = {
       type: "sine",
       frequency: {
@@ -53,12 +60,15 @@ describe("playNotificationSound", () => {
       destination: {},
       currentTime: 0,
       state: "running",
-      close: vi.fn(),
+      close: vi.fn().mockResolvedValue(undefined),
+      resume: vi.fn().mockResolvedValue(undefined),
     };
 
     vi.stubGlobal(
       "AudioContext",
-      vi.fn().mockImplementation(() => mockCtx)
+      vi.fn().mockImplementation(function () {
+        return mockCtx;
+      })
     );
     vi.useFakeTimers();
   });
@@ -70,7 +80,7 @@ describe("playNotificationSound", () => {
 
   it("does nothing when AudioContext is unavailable", () => {
     vi.stubGlobal("AudioContext", undefined);
-    (window as Window & { webkitAudioContext?: unknown }).webkitAudioContext = undefined;
+    vi.stubGlobal("webkitAudioContext", undefined);
     expect(() => playNotificationSound("send", true)).not.toThrow();
   });
 
@@ -81,34 +91,29 @@ describe("playNotificationSound", () => {
     expect(mockOsc.stop).toHaveBeenCalledOnce();
   });
 
-  it("plays receive sound (two notes with setTimeout)", () => {
+  it("plays receive sound as two scheduled notes", () => {
     playNotificationSound("receive", true);
-    expect(mockOsc.start).toHaveBeenCalledOnce();
-    vi.runAllTimers();
-    // second oscillator created via setTimeout
     expect(mockCtx.createOscillator).toHaveBeenCalledTimes(2);
   });
 
-  it("plays match sound (four notes staggered)", () => {
+  it("plays match sound as four scheduled notes", () => {
     playNotificationSound("match", true);
-    vi.runAllTimers();
     expect(mockCtx.createOscillator).toHaveBeenCalledTimes(4);
   });
 
   it("plays leave sound (two notes)", () => {
     playNotificationSound("leave", true);
-    vi.runAllTimers();
     expect(mockCtx.createOscillator).toHaveBeenCalledTimes(2);
   });
 
   it("plays invite sound", () => {
     playNotificationSound("invite", true);
-    expect(mockCtx.createOscillator).toHaveBeenCalledOnce();
+    expect(mockCtx.createOscillator).toHaveBeenCalledTimes(2);
   });
 
   it("plays game_start sound", () => {
     playNotificationSound("game_start", true);
-    expect(mockCtx.createOscillator).toHaveBeenCalledOnce();
+    expect(mockCtx.createOscillator).toHaveBeenCalledTimes(3);
   });
 
   it("plays block sound", () => {
@@ -119,57 +124,70 @@ describe("playNotificationSound", () => {
   it("does not throw if AudioContext constructor throws", () => {
     vi.stubGlobal(
       "AudioContext",
-      vi.fn().mockImplementation(() => {
+      vi.fn().mockImplementation(function () {
         throw new Error("unavailable");
       })
     );
     expect(() => playNotificationSound("send", true)).not.toThrow();
   });
 
-  it("skips second note in 'receive' when context is closed", () => {
-    playNotificationSound("receive", true);
-    // Close context before setTimeout fires
-    mockCtx.state = "closed";
-    vi.runAllTimers();
-    // Only the first oscillator should be created (second skipped due to closed state)
-    expect(mockCtx.createOscillator).toHaveBeenCalledOnce();
+  it("reuses one AudioContext across sounds", () => {
+    playNotificationSound("send", true);
+    playNotificationSound("block", true);
+    expect(AudioContext).toHaveBeenCalledOnce();
+    expect(mockCtx.createOscillator).toHaveBeenCalledTimes(2);
   });
 
-  it("skips staggered notes in 'match' when context is closed", () => {
-    playNotificationSound("match", true);
-    // All notes use setTimeout - close context before any timer fires
-    mockCtx.state = "closed";
-    vi.runAllTimers();
-    // All callbacks see closed state and skip oscillator creation
-    expect(mockCtx.createOscillator).not.toHaveBeenCalled();
+  it("resumes a suspended AudioContext", () => {
+    mockCtx.state = "suspended";
+    playNotificationSound("send", true);
+    expect(mockCtx.resume).toHaveBeenCalledOnce();
   });
 
-  it("skips staggered notes in 'leave' when context is closed", () => {
-    playNotificationSound("leave", true);
-    // All notes use setTimeout - close context before any timer fires
-    mockCtx.state = "closed";
-    vi.runAllTimers();
+  it("starts and stops a repeating ringtone", () => {
+    startNotificationLoop("incoming_ring", true);
+    expect(mockCtx.createOscillator).toHaveBeenCalledTimes(2);
+    vi.advanceTimersByTime(1800);
+    expect(mockCtx.createOscillator).toHaveBeenCalledTimes(4);
+    stopNotificationLoop("incoming_ring");
+    vi.advanceTimersByTime(1800);
+    expect(mockCtx.createOscillator).toHaveBeenCalledTimes(4);
+  });
+
+  it("does not start a ringtone when sounds are disabled", () => {
+    startNotificationLoop("incoming_ring", false);
+    vi.advanceTimersByTime(1800);
     expect(mockCtx.createOscillator).not.toHaveBeenCalled();
   });
 
   it("falls back to webkitAudioContext when AudioContext is unavailable", () => {
     vi.stubGlobal("AudioContext", undefined);
-    (window as Window & { webkitAudioContext?: unknown }).webkitAudioContext = vi
-      .fn()
-      .mockImplementation(() => mockCtx);
+    vi.stubGlobal(
+      "webkitAudioContext",
+      vi.fn().mockImplementation(function () {
+        return mockCtx;
+      })
+    );
     playNotificationSound("send", true);
     expect(mockCtx.createOscillator).toHaveBeenCalledOnce();
   });
 
   it("does nothing in SSR environment where window is undefined", () => {
-    // Save original window
-    const originalWindow = global.window;
-    // @ts-expect-error - testing SSR guard
-    delete global.window;
+    const origWindow = globalThis.window;
+    // Simulate SSR by temporarily hiding window
+    Object.defineProperty(globalThis, "window", {
+      value: undefined,
+      writable: true,
+      configurable: true,
+    });
 
     expect(() => playNotificationSound("send", true)).not.toThrow();
 
-    // Restore window
-    global.window = originalWindow;
+    // Restore
+    Object.defineProperty(globalThis, "window", {
+      value: origWindow,
+      writable: true,
+      configurable: true,
+    });
   });
 });

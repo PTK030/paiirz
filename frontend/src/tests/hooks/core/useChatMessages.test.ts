@@ -1,4 +1,5 @@
-import { renderHook, act, waitFor } from "@testing-library/react";
+import { waitFor } from "@testing-library/dom";
+import { renderHook, act } from "@testing-library/react";
 import type { RefObject } from "react";
 import type { Socket } from "socket.io-client";
 import { describe, it, expect, vi } from "vitest";
@@ -71,7 +72,7 @@ describe("useChatMessages", () => {
 
     const [, payload] = vi.mocked(socket.emit).mock.calls[0];
     expect((payload as { message: string }).message).not.toBe("tajne");
-    expect((payload as { e2e?: { iv: string } }).e2e?.iv).toBeTruthy();
+    expect((payload as { e2e?: { messageIv: string } }).e2e?.messageIv).toBeTruthy();
     // The locally-rendered copy is never encrypted - only the wire payload is.
     expect(result.current.chat[0].message).toBe("tajne");
   });
@@ -98,6 +99,76 @@ describe("useChatMessages", () => {
     });
 
     expect(result.current.chat).toEqual([]);
+  });
+
+  it("accepts and normalises null optional fields emitted by older backends", async () => {
+    const { socket, trigger } = createFakeSocket("me");
+    const { result } = renderHook(() => useChatMessages(socket, noKeyRef(), makeCallbacks()));
+
+    await act(async () => {
+      trigger("message", {
+        id: "msg-null",
+        sid: "stranger",
+        message: "real backend payload",
+        image: null,
+        video: null,
+        audio: null,
+        vanishing: null,
+        viewOnce: null,
+        e2e: null,
+        icebreaker: null,
+        reactions: {},
+      });
+      await Promise.resolve();
+    });
+
+    await waitFor(() => expect(result.current.chat).toHaveLength(1));
+    expect(result.current.chat[0]).toEqual(
+      expect.objectContaining({
+        id: "msg-null",
+        message: "real backend payload",
+        image: undefined,
+        video: undefined,
+        audio: undefined,
+        e2e: undefined,
+      })
+    );
+  });
+
+  it("accepts a game payload with nullable optional fields and the quit status", async () => {
+    const { socket, trigger } = createFakeSocket("me");
+    const { result } = renderHook(() => useChatMessages(socket, noKeyRef(), makeCallbacks()));
+
+    await act(async () => {
+      trigger("message", {
+        id: "game-null",
+        sid: "system",
+        reactions: {},
+        icebreaker: {
+          type: "this_or_that",
+          question: "A czy B?",
+          options: ["A", "B"],
+          votes: {},
+          status: "quit",
+          result: null,
+          voter_sid: null,
+          turn_sid: null,
+          accepted_users: null,
+          ready_for_next: null,
+        },
+      });
+      await Promise.resolve();
+    });
+
+    await waitFor(() => expect(result.current.chat).toHaveLength(1));
+    expect(result.current.chat[0].icebreaker).toEqual(
+      expect.objectContaining({
+        status: "quit",
+        result: undefined,
+        voter_sid: undefined,
+        turn_sid: undefined,
+      })
+    );
   });
 
   it("decrypts an incoming encrypted message using the shared key", async () => {
@@ -259,7 +330,7 @@ describe("useChatMessages", () => {
 
     const [, payload] = vi.mocked(socket.emit).mock.calls[0];
     expect((payload as { audio: string }).audio).not.toBe("data:audio/webm;base64,plaintext");
-    expect((payload as { e2e?: { iv: string } }).e2e?.iv).toBeTruthy();
+    expect((payload as { e2e?: { audioIv: string } }).e2e?.audioIv).toBeTruthy();
     // The locally-rendered copy is never encrypted.
     expect(result.current.chat[0].audio).toBe("data:audio/webm;base64,plaintext");
   });
@@ -520,7 +591,7 @@ describe("useChatMessages", () => {
 
     const [, payload] = vi.mocked(socket.emit).mock.calls[0];
     expect((payload as { image: string }).image).not.toBe("data:image/png;base64,plaintext");
-    expect((payload as { e2e?: { iv: string } }).e2e?.iv).toBeTruthy();
+    expect((payload as { e2e?: { imageIv: string } }).e2e?.imageIv).toBeTruthy();
   });
 
   it("encrypts an outgoing video when a shared key is available", async () => {
@@ -537,7 +608,7 @@ describe("useChatMessages", () => {
 
     const [, payload] = vi.mocked(socket.emit).mock.calls[0];
     expect((payload as { video: string }).video).not.toBe("data:video/mp4;base64,plaintext");
-    expect((payload as { e2e?: { iv: string } }).e2e?.iv).toBeTruthy();
+    expect((payload as { e2e?: { videoIv: string } }).e2e?.videoIv).toBeTruthy();
   });
 
   it("falls back to plaintext text/image/video when encryption throws in sendMessage", async () => {
@@ -585,6 +656,41 @@ describe("useChatMessages", () => {
     await waitFor(() => expect(result.current.chat).toHaveLength(1));
     expect(result.current.chat[0].image).toBe("data:image/png;base64,plain-image");
     expect(callbacks.incrementReceived).toHaveBeenCalledWith({ text: 0, image: 1, audio: 0 });
+  });
+
+  it("decrypts text and image from one message using their dedicated IVs", async () => {
+    const [senderRef, receiverRef] = await sharedKeyRefs();
+    const senderSocket = createFakeSocket("sender");
+    const sender = renderHook(() =>
+      useChatMessages(senderSocket.socket, noKeyRef(), makeCallbacks())
+    );
+
+    await act(async () => {
+      await sender.result.current.sendMessage(senderRef.current, {
+        room: "room-1",
+        text: "sekret",
+        image: "data:image/png;base64,cGxhaW4taW1hZ2U=",
+      });
+    });
+
+    const [, wirePayload] = vi.mocked(senderSocket.socket.emit).mock.calls[0];
+    const receiverSocket = createFakeSocket("receiver");
+    const receiver = renderHook(() =>
+      useChatMessages(receiverSocket.socket, receiverRef, makeCallbacks())
+    );
+
+    await act(async () => {
+      receiverSocket.trigger("message", {
+        ...(wirePayload as Record<string, unknown>),
+        sid: "sender",
+        reactions: {},
+      });
+      await Promise.resolve();
+    });
+
+    await waitFor(() => expect(receiver.result.current.chat).toHaveLength(1));
+    expect(receiver.result.current.chat[0].message).toBe("sekret");
+    expect(receiver.result.current.chat[0].image).toBe("data:image/png;base64,cGxhaW4taW1hZ2U=");
   });
 
   it("decrypts an incoming encrypted audio message and counts it as received audio", async () => {
@@ -731,5 +837,167 @@ describe("useChatMessages", () => {
     expect(listeners.get("message_unsent")?.size).toBe(0);
     expect(listeners.get("view_once_consumed")?.size).toBe(0);
     expect(listeners.get("icebreaker_updated")?.size).toBe(0);
+  });
+
+  it("plays 'invite' sound when icebreaker status is 'proposed'", async () => {
+    const { socket, trigger } = createFakeSocket("me");
+    const callbacks = makeCallbacks();
+    const { result } = renderHook(() => useChatMessages(socket, noKeyRef(), callbacks));
+
+    // Add a message to update
+    act(() =>
+      result.current.setChat([{ id: "msg-1", sid: "stranger", message: "x", reactions: {} }])
+    );
+
+    await act(async () => {
+      trigger("icebreaker_updated", {
+        messageId: "msg-1",
+        icebreaker: { type: "this_or_that", status: "proposed", question: "foo", votes: {} },
+      });
+      await Promise.resolve();
+    });
+
+    expect(callbacks.play).toHaveBeenCalledWith("invite");
+    expect(result.current.chat[0].icebreaker?.status).toBe("proposed");
+  });
+
+  it("plays 'game_start' sound when icebreaker status is 'pending'", async () => {
+    const { socket, trigger } = createFakeSocket("me");
+    const callbacks = makeCallbacks();
+    const { result } = renderHook(() => useChatMessages(socket, noKeyRef(), callbacks));
+
+    act(() =>
+      result.current.setChat([{ id: "msg-1", sid: "stranger", message: "x", reactions: {} }])
+    );
+
+    await act(async () => {
+      trigger("icebreaker_updated", {
+        messageId: "msg-1",
+        icebreaker: { type: "this_or_that", status: "pending", question: "foo", votes: {} },
+      });
+      await Promise.resolve();
+    });
+
+    expect(callbacks.play).toHaveBeenCalledWith("game_start");
+    expect(result.current.chat[0].icebreaker?.status).toBe("pending");
+  });
+
+  it("encrypts image and sets e2eMeta when there is no text", async () => {
+    const [sharedRef] = await sharedKeyRefs();
+    const { socket } = createFakeSocket("me");
+    const { result } = renderHook(() => useChatMessages(socket, noKeyRef(), makeCallbacks()));
+
+    await act(async () => {
+      await result.current.sendMessage(sharedRef.current, {
+        room: "room-1",
+        image: "data:image/png;base64,img",
+      });
+    });
+
+    const [, payload] = vi.mocked(socket.emit).mock.calls[0];
+    expect((payload as any).image).not.toBe("data:image/png;base64,img");
+    expect((payload as { e2e?: { imageIv: string } }).e2e?.imageIv).toBeTruthy();
+  });
+
+  it("encrypts video and sets e2eMeta when there is no text and no image", async () => {
+    const [sharedRef] = await sharedKeyRefs();
+    const { socket } = createFakeSocket("me");
+    const { result } = renderHook(() => useChatMessages(socket, noKeyRef(), makeCallbacks()));
+
+    await act(async () => {
+      await result.current.sendMessage(sharedRef.current, {
+        room: "room-1",
+        video: "data:video/mp4;base64,vid",
+      });
+    });
+
+    const [, payload] = vi.mocked(socket.emit).mock.calls[0];
+    expect((payload as any).video).not.toBe("data:video/mp4;base64,vid");
+    expect((payload as { e2e?: { videoIv: string } }).e2e?.videoIv).toBeTruthy();
+  });
+
+  it("does not play any sound when icebreaker status is 'declined' (or unhandled)", async () => {
+    const { socket, trigger } = createFakeSocket("me");
+    const callbacks = makeCallbacks();
+    const { result } = renderHook(() => useChatMessages(socket, noKeyRef(), callbacks));
+
+    act(() =>
+      result.current.setChat([{ id: "msg-1", sid: "stranger", message: "x", reactions: {} }])
+    );
+
+    await act(async () => {
+      trigger("icebreaker_updated", {
+        messageId: "msg-1",
+        icebreaker: { type: "this_or_that", status: "declined", question: "foo", votes: {} },
+      });
+      await Promise.resolve();
+    });
+
+    expect(callbacks.play).not.toHaveBeenCalledWith("invite");
+    expect(callbacks.play).not.toHaveBeenCalledWith("game_start");
+    expect(result.current.chat[0].icebreaker?.status).toBe("declined");
+  });
+
+  it("uses separate IVs when encrypting text and an image together", async () => {
+    const [sharedRef] = await sharedKeyRefs();
+    const { socket } = createFakeSocket("me");
+    const { result } = renderHook(() => useChatMessages(socket, noKeyRef(), makeCallbacks()));
+
+    await act(async () => {
+      await result.current.sendMessage(sharedRef.current, {
+        room: "room-1",
+        text: "tajne",
+        image: "data:image/png;base64,img",
+      });
+    });
+
+    const [, payload] = vi.mocked(socket.emit).mock.calls[0];
+    expect((payload as any).image).not.toBe("data:image/png;base64,img");
+    const e2e = (payload as { e2e?: { messageIv: string; imageIv: string } }).e2e;
+    expect(e2e?.messageIv).toBeTruthy();
+    expect(e2e?.imageIv).toBeTruthy();
+    expect(e2e?.messageIv).not.toBe(e2e?.imageIv);
+  });
+
+  it("uses a dedicated video IV when encrypting text, image and video together", async () => {
+    const [sharedRef] = await sharedKeyRefs();
+    const { socket } = createFakeSocket("me");
+    const { result } = renderHook(() => useChatMessages(socket, noKeyRef(), makeCallbacks()));
+
+    await act(async () => {
+      await result.current.sendMessage(sharedRef.current, {
+        room: "room-1",
+        text: "tajne",
+        image: "data:image/png;base64,img",
+        video: "data:video/mp4;base64,vid",
+      });
+    });
+
+    const [, payload] = vi.mocked(socket.emit).mock.calls[0];
+    expect((payload as any).video).not.toBe("data:video/mp4;base64,vid");
+    const e2e = (
+      payload as {
+        e2e?: { messageIv: string; imageIv: string; videoIv: string };
+      }
+    ).e2e;
+    expect(e2e?.messageIv).toBeTruthy();
+    expect(e2e?.imageIv).toBeTruthy();
+    expect(e2e?.videoIv).toBeTruthy();
+    expect(new Set([e2e?.messageIv, e2e?.imageIv, e2e?.videoIv]).size).toBe(3);
+  });
+
+  it("does nothing when consumeViewOnce is called with no connected socket", () => {
+    const { result } = renderHook(() => useChatMessages(null, noKeyRef(), makeCallbacks()));
+    act(() =>
+      result.current.setChat([
+        { id: "a", sid: "me", message: "x", image: "data:image/png;base64,foo", reactions: {} },
+      ])
+    );
+
+    act(() => result.current.consumeViewOnce("room-1", "a"));
+
+    // The chat state should update to mark as consumed, but no socket error is thrown
+    expect(result.current.chat[0].image).toBeUndefined();
+    expect(result.current.chat[0].message).toBe("🔒 Zdjęcie wygasło");
   });
 });

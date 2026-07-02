@@ -110,7 +110,8 @@ def _create_game(game_type: str, sid: str, users: list, custom_data: dict | None
 
 
 def _new_this_or_that(sid: str, custom_data: dict | None) -> dict:
-    if custom_data and isinstance(custom_data, dict):
+    is_custom = bool(custom_data and isinstance(custom_data, dict))
+    if is_custom:
         question = _sanitize_text(custom_data.get("question"), "To czy To?")
         options = _sanitize_options(custom_data.get("options"), ["A", "B"])
     else:
@@ -126,6 +127,7 @@ def _new_this_or_that(sid: str, custom_data: dict | None) -> dict:
         "accepted_users": [sid],
         "round": 1,
         "ready_for_next": [],
+        "is_custom": is_custom,
     }
 
 
@@ -193,7 +195,11 @@ def _handle_accept(game: dict, sid: str, users: list, data: dict) -> None:
     if sid not in accepted:
         accepted.append(sid)
     if len(accepted) >= min(2, len(users)):
-        game["status"] = "pending"
+        game["status"] = (
+            "revealed"
+            if game["type"] == "truth_or_dare" and game.get("is_custom")
+            else "pending"
+        )
 
 
 def _handle_decline(game: dict, sid: str, users: list, data: dict) -> None:
@@ -342,9 +348,10 @@ _WIRE_FIELDS = (
     "result",
     "voter_sid",
     "ready_for_next",
+    "is_custom",
 )
 
 
 def _serialize(game: dict) -> dict:
-    """Return only the fields the client needs, with None for missing ones."""
-    return {field: game.get(field) for field in _WIRE_FIELDS}
+    """Return only fields the client needs, omitting absent optional values."""
+    return {field: game[field] for field in _WIRE_FIELDS if game.get(field) is not None}

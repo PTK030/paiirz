@@ -1,4 +1,5 @@
-import { renderHook, act, waitFor } from "@testing-library/react";
+import { waitFor } from "@testing-library/dom";
+import { renderHook, act } from "@testing-library/react";
 import type { Socket } from "socket.io-client";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
@@ -252,5 +253,26 @@ describe("useRoom", () => {
     expect(listeners.get("room_joined")?.size).toBe(0);
     expect(listeners.get("room_left")?.size).toBe(0);
     expect(listeners.get("user_count")?.size).toBe(0);
+  });
+
+  it("does not crash when the initial user-counter fetch fails", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("network error")));
+    const { socket } = createFakeSocket();
+    const { result } = await renderRoom(socket, vi.fn(), makeCallbacks());
+    // userCount stays null because the fetch failed silently
+    expect(result.current.userCount).toBeNull();
+  });
+
+  it("reports 'Przerwano szukanie' when leaving before a stranger joins", async () => {
+    const { socket, trigger } = createFakeSocket();
+    const setStatus = vi.fn();
+    const { result } = await renderRoom(socket, setStatus, makeCallbacks());
+    act(() => trigger("room_created", "room-1"));
+    // stranger hasn't joined yet
+    expect(result.current.isStrangerInRoom).toBe(false);
+
+    act(() => result.current.leaveRoom());
+
+    expect(setStatus).toHaveBeenCalledWith("Przerwano szukanie");
   });
 });

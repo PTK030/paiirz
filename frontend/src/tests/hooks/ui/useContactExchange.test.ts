@@ -1,4 +1,5 @@
-import { renderHook, act, waitFor } from "@testing-library/react";
+import { waitFor } from "@testing-library/dom";
+import { renderHook, act } from "@testing-library/react";
 import type { Socket } from "socket.io-client";
 import { describe, it, expect, vi } from "vitest";
 

@@ -92,7 +92,9 @@ export function PrivateRoomCard({ privateRoom }: PrivateRoomCardProps) {
                     onChange={(e) => privateRoom.setNotifyOnTabLeave(e.target.checked)}
                     className="w-4 h-4 accent-violet-500 cursor-pointer"
                   />
-                  <span className="text-xs text-zinc-300">Powiadamiaj gdy rozmówca opuści kartę</span>
+                  <span className="text-xs text-zinc-300">
+                    Powiadamiaj gdy rozmówca opuści kartę
+                  </span>
                 </label>
               </div>
               <button

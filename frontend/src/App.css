@@ -1,7 +1,13 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
+@theme {
+  --color-deep-navy-blue: #021526;
+  --color-mid-night-blue: #03346e;
+  --font-sans:
+    "Satoshi", -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Inter", system-ui,
+    sans-serif;
+  --font-mono: "JetBrains Mono", "SF Mono", SFMono-Regular, ui-monospace, monospace;
+}
 @layer base {
   html,
   body {

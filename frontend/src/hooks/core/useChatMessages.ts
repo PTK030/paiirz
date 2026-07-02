@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import type React from "react";
 import type { Socket } from "socket.io-client";
 
-import type { Message, IcebreakerData } from "../../types/message";
+import type { Message, IcebreakerData, MessageE2EE } from "../../types/message";
 import {
   messageSchema,
   messageReactionSchema,
@@ -104,16 +104,36 @@ export function useChatMessages(
       const decrypted = { ...data };
       const sharedKey = sharedKeyRef.current;
       if (sharedKey && data.e2e) {
-        const { iv } = data.e2e;
-        try {
-          if (data.message) decrypted.message = await decrypt(sharedKey, { ct: data.message, iv });
-          if (data.image) decrypted.image = await decryptBinary(sharedKey, { ct: data.image, iv });
-          if (data.audio) decrypted.audio = await decryptBinary(sharedKey, { ct: data.audio, iv });
-          if (data.video) decrypted.video = await decryptBinary(sharedKey, { ct: data.video, iv });
-        } catch (err) {
-          console.error("[E2EE] Decryption failed:", err);
-          decrypted.message = "[Nie można odszyfrować wiadomości]";
-        }
+        const legacyIv = data.e2e.iv;
+        const decryptField = async (
+          field: "message" | "image" | "audio" | "video",
+          fieldIv: string | undefined
+        ) => {
+          const ciphertext = data[field];
+          const iv = fieldIv ?? legacyIv;
+          if (!ciphertext || !iv) return;
+
+          try {
+            decrypted[field] =
+              field === "message"
+                ? await decrypt(sharedKey, { ct: ciphertext, iv })
+                : await decryptBinary(sharedKey, { ct: ciphertext, iv });
+          } catch (err) {
+            console.error(`[E2EE] ${field} decryption failed:`, err);
+            if (field === "message") {
+              decrypted.message = "[Nie można odszyfrować wiadomości]";
+            } else {
+              decrypted[field] = undefined;
+            }
+          }
+        };
+
+        await Promise.all([
+          decryptField("message", data.e2e.messageIv),
+          decryptField("image", data.e2e.imageIv),
+          decryptField("audio", data.e2e.audioIv),
+          decryptField("video", data.e2e.videoIv),
+        ]);
       }
 
       // Defense in depth: only ever render media that is a well-formed
@@ -221,28 +241,38 @@ export function useChatMessages(
       let encMsg: string | undefined = input.text || undefined;
       let encImg: string | undefined = input.image || undefined;
       let encVid: string | undefined = input.video || undefined;
-      let e2eMeta: { iv: string } | undefined;
+      let e2eMeta: MessageE2EE | undefined;
 
       if (sharedKey) {
-        try {
-          if (input.text) {
+        e2eMeta = {};
+        if (input.text) {
+          try {
             const p = await encrypt(sharedKey, input.text);
             encMsg = p.ct;
-            e2eMeta = { iv: p.iv };
+            e2eMeta.messageIv = p.iv;
+          } catch (err) {
+            console.error("[E2EE] Text encryption failed:", err);
           }
-          if (input.image) {
+        }
+        if (input.image) {
+          try {
             const p = await encryptBinary(sharedKey, input.image);
             encImg = p.ct;
-            if (!input.text) e2eMeta = { iv: p.iv };
+            e2eMeta.imageIv = p.iv;
+          } catch (err) {
+            console.error("[E2EE] Image encryption failed:", err);
           }
-          if (input.video) {
+        }
+        if (input.video) {
+          try {
             const p = await encryptBinary(sharedKey, input.video);
             encVid = p.ct;
-            if (!input.text && !input.image) e2eMeta = { iv: p.iv };
+            e2eMeta.videoIv = p.iv;
+          } catch (err) {
+            console.error("[E2EE] Video encryption failed:", err);
           }
-        } catch (err) {
-          console.error("[E2EE] Encryption failed:", err);
         }
+        if (Object.keys(e2eMeta).length === 0) e2eMeta = undefined;
       }
 
       const newMsg: Message = {
@@ -285,13 +315,13 @@ export function useChatMessages(
 
       const msgId = crypto.randomUUID();
       let audioPayload = audioDataUrl;
-      let e2eMeta: { iv: string } | undefined;
+      let e2eMeta: MessageE2EE | undefined;
 
       if (sharedKey) {
         try {
           const p = await encryptBinary(sharedKey, audioDataUrl);
           audioPayload = p.ct;
-          e2eMeta = { iv: p.iv };
+          e2eMeta = { audioIv: p.iv };
         } catch (err) {
           console.error("[E2EE] Audio encryption failed:", err);
         }

@@ -17,8 +17,8 @@ export interface UseMediaUploadReturn {
   setViewOnceChecked: React.Dispatch<React.SetStateAction<boolean>>;
   previewLightboxOpen: boolean;
   setPreviewLightboxOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  imageInputRef: React.RefObject<HTMLInputElement>;
-  videoInputRef: React.RefObject<HTMLInputElement>;
+  imageInputRef: React.RefObject<HTMLInputElement | null>;
+  videoInputRef: React.RefObject<HTMLInputElement | null>;
   handleImagePicked: (e: React.ChangeEvent<HTMLInputElement>) => Promise<void>;
   handleVideoPicked: (e: React.ChangeEvent<HTMLInputElement>) => Promise<void>;
   /** Clear any selected image/video and reset the "view once" checkbox. */

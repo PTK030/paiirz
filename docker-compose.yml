@@ -7,10 +7,6 @@ services:
       - "5000:5000"
     env_file:
       - ./backend/.env
-    # Mount source for hot-reload in development.
-    # Remove this volume block before deploying to production.
-    volumes:
-      - ./backend:/app
 
   frontend:
     build: ./frontend

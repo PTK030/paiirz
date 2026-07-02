@@ -80,7 +80,7 @@ const Chat: React.FC = () => {
 
   // ── Custom hooks ───────────────────────────────────────────────────────────
   const prefs = usePreferences();
-  const { soundsEnabled, setSoundsEnabled, play } = useNotificationSound();
+  const { soundsEnabled, setSoundsEnabled, play, startLoop, stopLoop } = useNotificationSound();
   const { triggerTitleNotification } = useTitleNotification();
   const {
     sessionStats,
@@ -114,7 +114,12 @@ const Chat: React.FC = () => {
   } = contactExchange;
 
   const chatUI = useChatUI();
-  const media = useMediaUpload(() => chatUI.setActionsMenuOpen(false));
+  const { setActionsMenuOpen } = chatUI;
+  const handleMediaPicked = useCallback(() => {
+    setActionsMenuOpen(false);
+    play("media_selected");
+  }, [setActionsMenuOpen, play]);
+  const media = useMediaUpload(handleMediaPicked);
 
   /**
    * @description Resets all transient per-session UI state (contact
@@ -210,15 +215,56 @@ const Chat: React.FC = () => {
     isMicMuted,
     isVideoMuted,
     isRemoteMicMuted,
+    isRemoteVideoMuted,
     localVideoRef,
     remoteVideoRef,
     startCall,
     acceptCall,
     declineCall,
+    hangUp,
     endCall,
     toggleMic,
     toggleCamera,
   } = webrtc;
+
+  // Ringing is state-driven, so every exit path (accept, decline, remote
+  // hangup, room reset and component unmount) reliably stops the loop.
+  const previousCallStateRef = useRef(callState);
+  useEffect(() => {
+    stopLoop("incoming_ring");
+    stopLoop("outgoing_ring");
+
+    if (callState === "incoming") startLoop("incoming_ring");
+    if (callState === "calling") startLoop("outgoing_ring");
+
+    const previous = previousCallStateRef.current;
+    if (callState === "connected" && previous !== "connected") play("call_connected");
+    if (callState === "idle" && previous !== "idle") play("call_end");
+    previousCallStateRef.current = callState;
+  }, [callState, soundsEnabled, play, startLoop, stopLoop]);
+
+  useEffect(() => {
+    if (chatUI.actionsMenuOpen || chatUI.gamesMenuOpen) play("menu_open");
+  }, [chatUI.actionsMenuOpen, chatUI.gamesMenuOpen, play]);
+
+  const handleToggleMic = useCallback(() => {
+    play(isMicMuted ? "mic_unmute" : "mic_mute");
+    toggleMic();
+  }, [isMicMuted, play, toggleMic]);
+
+  const handleToggleCamera = useCallback(async () => {
+    play(isVideoMuted ? "camera_on" : "camera_off");
+    await toggleCamera();
+  }, [isVideoMuted, play, toggleCamera]);
+
+  const stopRecordingWithSound = useCallback(
+    (shouldSend: boolean) => {
+      if (recordingMode === "none") return;
+      play(shouldSend ? "recording_send" : "recording_cancel");
+      stopRecording(shouldSend);
+    },
+    [play, recordingMode, stopRecording]
+  );
 
   // ── Consume recorded audio and send it ────────────────────────────────────
   useEffect(() => {
@@ -515,13 +561,14 @@ const Chat: React.FC = () => {
     if (!room.isStrangerInRoom || !room.room || !socket) return;
     const next = !vanishModeActive;
     setVanishModeActive(next);
+    play(next ? "vanish_on" : "vanish_off");
     socket.emit("toggle_vanish", { room: room.room, active: next });
     chatMessages.addSystemMessage(
       next
         ? "Włączono tryb znikających wiadomości. Wiadomości znikną po 5 sekundach."
         : "Wyłączono tryb znikających wiadomości."
     );
-  }, [room.isStrangerInRoom, room.room, socket, vanishModeActive, chatMessages]);
+  }, [room.isStrangerInRoom, room.room, socket, vanishModeActive, chatMessages, play]);
 
   /**
    * @description Starts an icebreaker mini-game ("this or that" / "truth or
@@ -564,7 +611,9 @@ const Chat: React.FC = () => {
     holdTimeoutRef.current = window.setTimeout(() => {
       holdTimeoutRef.current = null;
       setRecordingMode("holding");
-      startRecording().catch(() => {});
+      startRecording()
+        .then(() => play("recording_start"))
+        .catch(() => {});
     }, MIC_HOLD_THRESHOLD_MS);
   };
 
@@ -579,9 +628,11 @@ const Chat: React.FC = () => {
       clearTimeout(holdTimeoutRef.current);
       holdTimeoutRef.current = null;
       setRecordingMode("locked");
-      startRecording().catch(() => {});
+      startRecording()
+        .then(() => play("recording_start"))
+        .catch(() => {});
     } else if (recordingMode === "holding") {
-      stopRecording(true);
+      stopRecordingWithSound(true);
     }
   };
 
@@ -591,7 +642,7 @@ const Chat: React.FC = () => {
    */
   const handleMicMouseLeave = (e: React.MouseEvent) => {
     e.preventDefault();
-    if (recordingMode === "holding") stopRecording(false);
+    if (recordingMode === "holding") stopRecordingWithSound(false);
   };
 
   // ── Render ─────────────────────────────────────────────────────────────────
@@ -707,11 +758,12 @@ const Chat: React.FC = () => {
                   isMicMuted={isMicMuted}
                   isVideoMuted={isVideoMuted}
                   isRemoteMicMuted={isRemoteMicMuted}
+                  isRemoteVideoMuted={isRemoteVideoMuted}
                   localVideoRef={localVideoRef}
                   remoteVideoRef={remoteVideoRef}
-                  onToggleMic={toggleMic}
-                  onToggleCamera={toggleCamera}
-                  onEndCall={endCall}
+                  onToggleMic={handleToggleMic}
+                  onToggleCamera={handleToggleCamera}
+                  onEndCall={hangUp}
                   onCancelOutgoingCall={declineCall}
                 />
 
@@ -778,7 +830,12 @@ const Chat: React.FC = () => {
               setMessage={setMessage}
               sendMessage={sendMessage}
               blockedTimeLeft={blockedTimeLeft}
-              recording={{ recordingMode, recordingTime, recordingWave, stopRecording }}
+              recording={{
+                recordingMode,
+                recordingTime,
+                recordingWave,
+                stopRecording: stopRecordingWithSound,
+              }}
               onMicMouseDown={handleMicMouseDown}
               onMicMouseUp={handleMicMouseUp}
               onMicMouseLeave={handleMicMouseLeave}

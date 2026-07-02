@@ -19,11 +19,7 @@ interface ChatHeaderProps {
  * "E2EE" state once the shared key is derived - giving the user a clear,
  * at-a-glance signal for when it's safe to assume messages are encrypted.
  */
-export function ChatHeader({
-  userCount,
-  soundsEnabled,
-  onToggleSounds,
-}: ChatHeaderProps) {
+export function ChatHeader({ userCount, soundsEnabled, onToggleSounds }: ChatHeaderProps) {
   return (
     <div className="relative z-20 flex flex-wrap items-center justify-between px-3 sm:px-6 py-3 sm:py-4 border-b border-zinc-800/60 bg-zinc-950/30 backdrop-blur-md w-full gap-2">
       <div className="flex items-center gap-3 sm:gap-4 shrink-0">
@@ -94,7 +90,6 @@ export function ChatHeader({
             </>
           )}
         </button>
-
 
         {/* Online users counter */}
         <div className="flex items-center gap-2 text-xs sm:text-sm font-medium text-zinc-400 bg-zinc-900/50 px-3 py-1.5 rounded-xl border border-zinc-800/50 select-none">

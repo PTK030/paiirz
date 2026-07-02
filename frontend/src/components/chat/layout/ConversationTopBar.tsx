@@ -1,5 +1,5 @@
-import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useState, useRef, useEffect } from "react";
 import { BsTelephone, BsCameraVideo, BsPersonVcard } from "react-icons/bs";
 
 import type { CallState } from "../../../hooks/media/useWebRTC";
@@ -77,7 +77,7 @@ export function ConversationTopBar({
         </span>
       </div>
 
-      <div 
+      <div
         ref={menuRef}
         className="flex items-center flex-wrap justify-end gap-1.5 sm:gap-2 relative contact-exchange-container"
       >
@@ -237,7 +237,6 @@ export function ConversationTopBar({
             )}
           </AnimatePresence>
         </div>
-
 
         {/* Call buttons */}
         {callState === "idle" && (

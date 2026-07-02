@@ -76,12 +76,12 @@ describe("useChatUI", () => {
     expect(result.current.contactMenuOpen).toBe(true);
   });
 
-  it("does not close a menu when clicking inside a different menu's container", () => {
+  it("keeps the games menu open for the click inside its parent actions boundary", () => {
     const { result } = renderHook(() => useChatUI());
     act(() => result.current.setGamesMenuOpen(true));
 
     act(() => clickOn("actions-menu-container"));
-    expect(result.current.gamesMenuOpen).toBe(false);
+    expect(result.current.gamesMenuOpen).toBe(true);
   });
 
   it("removes the outside-click listener on unmount", () => {

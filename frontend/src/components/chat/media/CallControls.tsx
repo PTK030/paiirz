@@ -18,6 +18,8 @@ export interface CallControlsProps {
   isVideoMuted: boolean;
   /** True when the remote peer has muted their microphone. */
   isRemoteMicMuted: boolean;
+  /** True when the remote peer has turned off their camera. */
+  isRemoteVideoMuted: boolean;
   localVideoRef: RefObject<HTMLVideoElement | null>;
   remoteVideoRef: RefObject<HTMLVideoElement | null>;
   onToggleMic: () => void;
@@ -42,6 +44,7 @@ export function CallControls({
   isMicMuted,
   isVideoMuted,
   isRemoteMicMuted,
+  isRemoteVideoMuted,
   localVideoRef,
   remoteVideoRef,
   onToggleMic,
@@ -49,6 +52,8 @@ export function CallControls({
   onEndCall,
   onCancelOutgoingCall,
 }: CallControlsProps) {
+  const showAvatars = isVideoMuted && isRemoteVideoMuted;
+
   return (
     <AnimatePresence>
       {(callState === "connected" || callState === "calling") && (
@@ -96,14 +101,14 @@ export function CallControls({
                   ref={remoteVideoRef as RefObject<HTMLVideoElement>}
                   autoPlay
                   playsInline
-                  className={`w-full h-full object-cover ${isVideoMuted ? "hidden" : ""}`}
+                  className={`w-full h-full object-cover ${showAvatars ? "hidden" : ""}`}
                   style={{
                     minHeight: "220px",
                     maxHeight: "340px",
                     background: "#09090b",
                   }}
                 />
-                {isVideoMuted && (
+                {showAvatars && (
                   <div
                     className="flex items-center justify-center w-full"
                     style={{ minHeight: "220px" }}
@@ -170,16 +175,16 @@ export function CallControls({
                 <button
                   onClick={onToggleMic}
                   title={isMicMuted ? "Włącz mikrofon" : "Wycisz mikrofon"}
-                  className={`w-10 h-10 rounded-full flex items-center justify-center transition-all cursor-pointer border ${isMicMuted ? "bg-red-500/20 border-red-500/40 text-red-400" : "bg-zinc-800/80 border-zinc-700/50 text-zinc-300 hover:bg-zinc-700"}`}
+                  className={`w-12 h-12 rounded-full flex items-center justify-center transition-all cursor-pointer border ${isMicMuted ? "bg-red-500/20 border-red-500/40 text-red-400" : "bg-zinc-800/80 border-zinc-700/50 text-zinc-300 hover:bg-zinc-700"}`}
                 >
-                  {isMicMuted ? <BsMicMute size={16} /> : <BsMic size={16} />}
+                  {isMicMuted ? <BsMicMute size={18} /> : <BsMic size={18} />}
                 </button>
                 <button
                   onClick={onToggleCamera}
                   title={isVideoMuted ? "Włącz kamerę" : "Wyłącz kamerę"}
-                  className={`w-10 h-10 rounded-full flex items-center justify-center transition-all cursor-pointer border ${isVideoMuted ? "bg-zinc-800/80 border-zinc-700/50 text-zinc-400 hover:bg-zinc-700" : "bg-indigo-500/20 border-indigo-500/40 text-indigo-300"}`}
+                  className={`w-12 h-12 rounded-full flex items-center justify-center transition-all cursor-pointer border ${isVideoMuted ? "bg-zinc-800/80 border-zinc-700/50 text-zinc-400 hover:bg-zinc-700" : "bg-indigo-500/20 border-indigo-500/40 text-indigo-300"}`}
                 >
-                  {isVideoMuted ? <BsCameraVideoOff size={16} /> : <BsCameraVideo size={16} />}
+                  {isVideoMuted ? <BsCameraVideoOff size={18} /> : <BsCameraVideo size={18} />}
                 </button>
                 <button
                   onClick={onEndCall}

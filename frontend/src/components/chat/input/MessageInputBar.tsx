@@ -104,8 +104,8 @@ export function MessageInputBar({
                   type="button"
                   onClick={(e) => {
                     e.stopPropagation();
-                    chatUI.setActionsMenuOpen(false);
                     chatUI.setGamesMenuOpen(true);
+                    chatUI.setActionsMenuOpen(false);
                   }}
                   className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm text-zinc-300 hover:text-white hover:bg-zinc-800/80 transition-colors"
                 >
@@ -124,30 +124,22 @@ export function MessageInputBar({
                   </svg>
                   Mini-gry
                 </button>
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    chatUI.setActionsMenuOpen(false);
-                    media.imageInputRef.current?.click();
-                  }}
-                  className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm text-zinc-300 hover:text-white hover:bg-zinc-800/80 transition-colors"
+                <label
+                  htmlFor="image-upload-input"
+                  onClick={(e) => e.stopPropagation()}
+                  className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm text-zinc-300 hover:text-white hover:bg-zinc-800/80 transition-colors cursor-pointer"
                 >
                   <BsImage size={14} className="text-indigo-300" />
                   Zdjęcie
-                </button>
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    chatUI.setActionsMenuOpen(false);
-                    media.videoInputRef.current?.click();
-                  }}
-                  className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm text-zinc-300 hover:text-white hover:bg-zinc-800/80 transition-colors"
+                </label>
+                <label
+                  htmlFor="video-upload-input"
+                  onClick={(e) => e.stopPropagation()}
+                  className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm text-zinc-300 hover:text-white hover:bg-zinc-800/80 transition-colors cursor-pointer"
                 >
                   <BsFilm size={14} className="text-indigo-300" />
                   Wideo
-                </button>
+                </label>
               </motion.div>
             )}
           </AnimatePresence>
@@ -163,17 +155,19 @@ export function MessageInputBar({
         </div>
 
         <input
+          id="image-upload-input"
           ref={media.imageInputRef}
           type="file"
           accept="image/*"
-          className="hidden"
+          className="absolute w-[1px] h-[1px] opacity-0 overflow-hidden -z-10"
           onChange={media.handleImagePicked}
         />
         <input
+          id="video-upload-input"
           ref={media.videoInputRef}
           type="file"
           accept="video/*"
-          className="hidden"
+          className="absolute w-[1px] h-[1px] opacity-0 overflow-hidden -z-10"
           onChange={media.handleVideoPicked}
         />
       </div>

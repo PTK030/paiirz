@@ -75,7 +75,9 @@ export function useRoom(
   const [room, setRoom] = useState<string | null>(null);
   const [isStrangerInRoom, setIsStrangerInRoom] = useState(false);
   const [userCount, setUserCount] = useState<number | null>(null);
-  const [disconnectReason, setDisconnectReason] = useState<"me" | "stranger" | "blocked" | null>(null);
+  const [disconnectReason, setDisconnectReason] = useState<"me" | "stranger" | "blocked" | null>(
+    null
+  );
   const currentRoomRef = useRef<string | null>(null);
 
   // Always-fresh callbacks ref - lets the socket effect below subscribe only
