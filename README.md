@@ -1,3 +1,4 @@
+<img width="1280" height="731" alt="Zrzut ekranu 2026-07-02 234111" src="https://github.com/user-attachments/assets/0b35201a-2efc-41b0-b3a2-6384fe19e7fc" />
 <div align="center">
 
 # paiirz
