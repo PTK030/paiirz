@@ -6,10 +6,10 @@
 
 An anonymous P2P chat with end-to-end encryption, WebRTC video/audio calls, and disappearing media — no registration, no history, no trace.
 
-[![React](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=white)](https://react.dev/)
+[![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![Vite](https://img.shields.io/badge/Vite-5-646CFF?logo=vite&logoColor=white)](https://vitejs.dev/)
-[![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-3-06B6D4?logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
+[![Vite](https://img.shields.io/badge/Vite-8-646CFF?logo=vite&logoColor=white)](https://vitejs.dev/)
+[![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-4-06B6D4?logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
 [![Flask](https://img.shields.io/badge/Flask-3-000000?logo=flask&logoColor=white)](https://flask.palletsprojects.com/)
 [![Socket.IO](https://img.shields.io/badge/Socket.IO-5-010101?logo=socketdotio&logoColor=white)](https://socket.io/)
 [![WebRTC](https://img.shields.io/badge/WebRTC-P2P-333333?logo=webrtc&logoColor=white)](https://webrtc.org/)
@@ -55,7 +55,7 @@ No accounts, no message history after closing the tab, no content logging on the
 
 | Layer | Technologies |
 |---|---|
-| Frontend | [React 18](https://react.dev/) · [TypeScript](https://www.typescriptlang.org/) (strict) · [Vite](https://vitejs.dev/) · [Tailwind CSS](https://tailwindcss.com/) · [Framer Motion](https://www.framer.com/motion/) · [Zod](https://zod.dev/) |
+| Frontend | [React 19](https://react.dev/) · [TypeScript](https://www.typescriptlang.org/) (strict) · [Vite](https://vitejs.dev/) · [Tailwind CSS 4](https://tailwindcss.com/) · [Framer Motion](https://www.framer.com/motion/) · [Zod](https://zod.dev/) |
 | Backend | [Flask](https://flask.palletsprojects.com/) · [Flask-SocketIO](https://flask-socketio.readthedocs.io/) · [Eventlet](https://eventlet.readthedocs.io/) |
 | Real-time / P2P | [Socket.IO](https://socket.io/) (signaling) · [WebRTC](https://webrtc.org/) (P2P media) |
 | Cryptography | Web Crypto API — ECDH P-256, HKDF, AES-GCM-256 |
@@ -117,8 +117,8 @@ The server will start at `http://localhost:5000` by default.
 
 ```bash
 cd frontend
-npm install
-npm run dev
+yarn install
+yarn dev
 ```
 
 The application will start at `http://localhost:5173` by default.
@@ -128,9 +128,9 @@ The application will start at `http://localhost:5173` by default.
 ```bash
 # Frontend
 cd frontend
-npm run test          # Vitest + code coverage
-npm run type-check    # TypeScript
-npm run lint          # ESLint
+yarn test          # Vitest + code coverage
+yarn type-check    # TypeScript
+yarn lint          # ESLint
 
 # Backend
 cd backend
